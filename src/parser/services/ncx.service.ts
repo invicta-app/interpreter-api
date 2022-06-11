@@ -1,7 +1,7 @@
 import { BadRequestException, Injectable } from '@nestjs/common';
 import * as fs from 'fs-extra';
 import { Section } from '../types/toc.ncx.types';
-import { readXml } from '../xml/xml-parser';
+import { parseXml } from '../xml/xml-parser';
 import { TextService } from './text.service';
 
 /**
@@ -9,12 +9,12 @@ import { TextService } from './text.service';
  */
 
 @Injectable()
-export class TocService {
+export class NcxService {
   constructor(private textService: TextService) {}
 
   async processTocNcx(rootPath: string): Promise<Section[]> {
     const tocNcxPath = await this.getTocNcxPath(rootPath);
-    const tocNcxObj = await readXml(tocNcxPath);
+    const tocNcxObj = await parseXml(tocNcxPath);
     const navigationPoint = tocNcxObj?.ncx?.navMap?.navPoint;
     const tableOfContents = await this.processNavigationPoint(navigationPoint);
     return tableOfContents;
