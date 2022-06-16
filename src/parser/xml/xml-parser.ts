@@ -1,32 +1,23 @@
-import { XMLParser } from 'fast-xml-parser';
+import { X2jOptionsOptional, XMLParser } from 'fast-xml-parser';
 import * as fs from 'fs-extra';
-import { InternalServerErrorException } from '@nestjs/common';
-import { isArray } from '../../helpers/validatePrimitives';
 
-export const parser = new XMLParser({
-  ignoreAttributes: false,
-  allowBooleanAttributes: true,
-  attributeNamePrefix: '',
-  textNodeName: 'text',
-});
-
-export const textParser = new XMLParser({
-  ignoreAttributes: false,
-  allowBooleanAttributes: true,
-  attributeNamePrefix: '',
-  textNodeName: 'text',
-  alwaysCreateTextNode: true, // changes the parsing mechanism - better for text
-});
-
-export const parseXml = async (path: string, ascii = 'utf8'): Promise<any> => {
-  const xml = await fs.readFile(path, ascii);
-  return await parser.parse(xml);
+export const createParser = (opts?: X2jOptionsOptional) => {
+  return new XMLParser({
+    ignoreAttributes: false,
+    ignoreDeclaration: true,
+    allowBooleanAttributes: true,
+    attributeNamePrefix: '',
+    textNodeName: 'text',
+    ...opts,
+  });
 };
 
-export const parseXmlText = async (
+export const parseXml = async (
   path: string,
+  opts: X2jOptionsOptional = {},
   ascii = 'utf8',
 ): Promise<any> => {
+  const parser = createParser(opts);
   const xml = await fs.readFile(path, ascii);
-  return await textParser.parse(xml);
+  return await parser.parse(xml);
 };

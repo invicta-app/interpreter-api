@@ -29,14 +29,14 @@
     "class-validator": "^0.13.2",
     "dotenv": "^16.0.0",
     "fast-xml-parser": "^4.0.7",
+    "fast-xml-parser-ordered": "^3.12.22",
     "fs-extra": "^10.1.0",
-    "jszip": "^3.10.0",
-    "jszip-utils": "^0.1.0",
     "node-stream-zip": "^1.15.0",
     "reflect-metadata": "^0.1.13",
     "rimraf": "^3.0.2",
     "rxjs": "^7.2.0",
     "uninstall": "^0.0.0",
+    "util": "^0.12.4",
     "xml-parser": "^1.2.1"
   },
   "devDependencies": {

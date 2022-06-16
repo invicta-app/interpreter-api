@@ -1,46 +1,42 @@
 import { Injectable } from '@nestjs/common';
 import { OpfManifest, OpfManifestItem } from '../../../../types/opf/opf.type';
-import { DelegatedManifest, ManifestFormats } from '../opf.service';
+import { SpineService } from './spine.service';
+import {
+  ManifestTypes,
+  ManifestItem,
+  Manifest,
+} from '../../../../types/manifest.type';
 
 @Injectable()
 export class ManifestService {
-  async processManifest(manifest: OpfManifest) {
-    const rawItems: Array<OpfManifestItem> = manifest.item;
-    const manifestItems = this.delegateManifestItems(rawItems);
-    const orderedItems = this.orderManifestItems(manifestItems);
+  processManifest(opfManifest: OpfManifest): Manifest {
+    const rawItems: Array<OpfManifestItem> = opfManifest.item;
 
-    return manifestItems;
-  }
-
-  private delegateManifestItems(
-    manifestItems: Array<OpfManifestItem>,
-  ): DelegatedManifest {
-    const delegated: DelegatedManifest = {
+    const manifest: Manifest = {
       text: [],
       image: [],
       font: [],
       css: [],
     };
-
-    for (const item of manifestItems) {
+    for (const item of rawItems) {
       switch (item['media-type']) {
-        case ManifestFormats.TEXT:
-          delegated.text.push(this.formatManifestItem(item));
+        case ManifestTypes.TEXT:
+          manifest.text.push(this.formatManifestItem(item));
           break;
-        case ManifestFormats.CSS:
-          delegated.css.push(this.formatManifestItem(item));
+        case ManifestTypes.CSS:
+          manifest.css.push(this.formatManifestItem(item));
           break;
-        case ManifestFormats.IMAGE:
-          delegated.image.push(this.formatManifestItem(item));
+        case ManifestTypes.IMAGE:
+          manifest.image.push(this.formatManifestItem(item));
           break;
-        case ManifestFormats.FONT:
-          delegated.font.push(this.formatManifestItem(item));
+        case ManifestTypes.FONT:
+          manifest.font.push(this.formatManifestItem(item));
           break;
         default:
           break;
       }
     }
-    return delegated;
+    return manifest as Manifest;
   }
 
   private formatManifestItem(item: OpfManifestItem) {
@@ -49,9 +45,5 @@ export class ManifestService {
       id: item.id,
       media_type: item['media-type'],
     };
-  }
-
-  private orderManifestItems(item: Array<any>) {
-    return;
   }
 }

@@ -1,4 +1,4 @@
-export interface Opf {
+export interface OpfObject {
   package: {
     metadata: OpfMetadata;
     manifest: OpfManifest;
@@ -22,7 +22,7 @@ export interface OpfManifest {
 }
 
 export interface OpfSpine {
-  itemref: Array<any>;
+  itemref: Array<{ idref: string }>;
   toc?: string;
 }
 
