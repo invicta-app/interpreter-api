@@ -1,8 +1,8 @@
 import { BadRequestException, Injectable } from '@nestjs/common';
 import * as fs from 'fs-extra';
-import { Section } from '../types/toc.ncx.types';
-import { parseXml } from '../xml/xml-parser';
-import { TextService } from './text.service';
+import { Section } from '../../types/toc.ncx.types';
+import { parseXml } from '../../xml/xml-parser';
+import { SectionService } from '../../services/section.service';
 
 /**
  * toc.ncx => Table of Contents, Navigation Control for XML
@@ -10,7 +10,7 @@ import { TextService } from './text.service';
 
 @Injectable()
 export class NcxService {
-  constructor(private textService: TextService) {}
+  constructor(private textService: SectionService) {}
 
   async processTocNcx(rootPath: string): Promise<Section[]> {
     const tocNcxPath = await this.getTocNcxPath(rootPath);

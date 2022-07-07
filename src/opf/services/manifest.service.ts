@@ -1,11 +1,6 @@
 import { Injectable } from '@nestjs/common';
-import { OpfManifest, OpfManifestItem } from '../../../../types/opf/opf.type';
-import { SpineService } from './spine.service';
-import {
-  ManifestTypes,
-  ManifestItem,
-  Manifest,
-} from '../../../../types/manifest.type';
+import { OpfManifest, OpfManifestItem } from '../../types/opf/opf.type';
+import { ManifestTypes, Manifest } from '../../types/manifest.types';
 
 @Injectable()
 export class ManifestService {
@@ -18,6 +13,7 @@ export class ManifestService {
       font: [],
       css: [],
     };
+
     for (const item of rawItems) {
       switch (item['media-type']) {
         case ManifestTypes.TEXT:

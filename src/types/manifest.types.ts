@@ -17,4 +17,5 @@ export interface ManifestItem {
   id: string;
   media_type: string;
   order?: number;
+  text?: string;
 }

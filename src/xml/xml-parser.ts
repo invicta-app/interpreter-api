@@ -5,6 +5,7 @@ export const createParser = (opts?: X2jOptionsOptional) => {
   return new XMLParser({
     ignoreAttributes: false,
     ignoreDeclaration: true,
+    ignorePiTags: true,
     allowBooleanAttributes: true,
     attributeNamePrefix: '',
     textNodeName: 'text',

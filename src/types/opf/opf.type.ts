@@ -8,13 +8,16 @@ export interface OpfObject {
 }
 
 export interface OpfMetadata {
-  'dc:contributor': any;
-  'dc:publisher': any;
+  'dc:contributor'?: Array<{ id: string; text: string }>;
+  'dc:publisher'?: any;
   'dc:creator': any;
   'dc:title': any;
   'dc:date': any;
   'dc:language': any;
   'dc:identifier': any;
+  'dc:rights'?: any;
+  'dc:source'?: any;
+  'dc:subject'?: any;
 }
 
 export interface OpfManifest {
@@ -27,7 +30,13 @@ export interface OpfSpine {
 }
 
 export interface OpfGuide {
-  reference: Array<any>;
+  reference: Array<OpfGuideItem>;
+}
+
+export interface OpfGuideItem {
+  href: string;
+  title: string;
+  type: 'text' | 'cover' | 'toc';
 }
 
 export interface OpfManifestItem {
