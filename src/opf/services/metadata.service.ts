@@ -51,29 +51,31 @@ export class MetadataService {
     return contributors;
   }
 
-  private getIdentifiers(identifierArr: Array<any>) {
-    const identifiers = [];
+  private getIdentifiers(identifiers: any) {
+    if (typeof identifiers == 'object') {
+      if (identifiers.text && identifiers.id) return [identifiers];
+      return;
+    }
 
-    identifierArr.map((id) => {
+    const arr: Array<{ id: string; type: string }> = [];
+
+    console.log('array:', identifiers);
+
+    identifiers.map((id) => {
       if (typeof id === 'string') {
-        if (id.includes('uuid')) identifiers.push({ type: 'uuid', id });
-        else if (id.includes('isbn')) identifiers.push({ type: 'isbn', id });
-        else if (id.includes('mobi'))
-          identifiers.push({ type: 'mobi_asin', id });
-        else if (id.includes('calibre'))
-          identifiers.push({ type: 'calibre', id });
-        else if (id.includes('url')) identifiers.push({ type: 'url', id });
-        else identifiers.push({ type: 'misc', id });
+        if (id.includes('uuid')) arr.push({ type: 'uuid', id });
+        else if (id.includes('isbn')) arr.push({ type: 'isbn', id });
+        else if (id.includes('mobi')) arr.push({ type: 'mobi_asin', id });
+        else if (id.includes('calibre')) arr.push({ type: 'calibre', id });
+        else if (id.includes('url')) arr.push({ type: 'url', id });
+        else arr.push({ type: 'misc', id });
       } else if (id.text && id.id) {
-        identifiers.push({ type: id.id, id: id.text });
+        arr.push({ type: id.id, id: id.text });
       } else if (id['opf:scheme'])
-        identifiers.push({
-          type: this.mapOpfScheme(id['opf:scheme']),
-          id: id.text,
-        });
+        arr.push({ type: this.mapOpfScheme(id['opf:scheme']), id: id.text });
     });
 
-    return identifiers as Array<{ id: string; type: string }>;
+    return arr as Array<{ id: string; type: string }>;
   }
 
   private mapOpfScheme(scheme: string) {
