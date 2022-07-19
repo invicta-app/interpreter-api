@@ -11,9 +11,11 @@ export class SectionService {
   async createSection(item: ManifestItem, fileAsString: string) {
     const xml = await processXml(fileAsString);
 
+    const cleanString = fileAsString.replace(/(\r\n|\n|\r|\t)/gm, '');
+
     const section: ISection = {
       id: item.id,
-      text: fileAsString.replace(/(\r\n|\n|\r)/gm, ''),
+      text: fileAsString,
       body_id: xml?.html?.body?.id,
       body_class: xml?.html?.body?.class,
       position: item.order,
