@@ -37,10 +37,13 @@ export class MetadataService {
     else if (param.text) return { text: param.text, type: null };
   }
 
-  private getContributors(list: Array<{ text: string; id: string }>) {
+  private getContributors(list: any) {
     if (!list) return null;
-    const contributors = [];
 
+    if (typeof list === 'object')
+      return [{ contributor: list.text, type: list.id }];
+
+    const contributors = [];
     list.forEach((contributor) => {
       contributors.push({
         contributor: contributor.text,
@@ -52,7 +55,7 @@ export class MetadataService {
   }
 
   private getIdentifiers(identifiers: any) {
-    if (typeof identifiers == 'object') {
+    if (typeof identifiers === 'object') {
       if (identifiers.text && identifiers.id) return [identifiers];
       return;
     }

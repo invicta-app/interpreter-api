@@ -11,7 +11,9 @@ export class GuideService {
 
   async getTocHref(guide: OpfGuide) {
     if (!guide) return;
-    const tocRef = guide.reference.find((item) => item.type === 'toc');
-    return tocRef;
+    if (Array.isArray(guide.reference)) {
+      const tocRef = guide.reference.find((item) => item.type === 'toc');
+      return tocRef;
+    }
   }
 }

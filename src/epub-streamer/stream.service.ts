@@ -1,6 +1,5 @@
 import { Injectable, InternalServerErrorException } from '@nestjs/common';
 import * as StreamZip from 'node-stream-zip';
-import { StreamDto } from './dto/stream.dto';
 import { processXml } from '../xml/xml-processor';
 import { OpfObject } from '../types/opf/opf.type';
 import { Metadata } from '../types/metadata.types';
@@ -12,6 +11,7 @@ import { SectionService } from '../services/section.service';
 import { ISection } from '../types/section.interface';
 import { getRootPath } from '../helpers/rootPath';
 import { getOpfFilePath } from '../helpers/getOpfFilePath';
+import { SectionDto } from './dto/section.dto';
 
 @Injectable()
 export class StreamService {
@@ -20,11 +20,55 @@ export class StreamService {
     private sectionService: SectionService,
   ) {}
 
-  async streamEpub(streamDto: StreamDto) {
-    const { volume_id, order } = streamDto;
+  async streamVolume(volume_id: string) {
     const epub = await this.epubStream(volume_id);
     const entries = this.formatEntries(await epub.entries());
 
+    const { metadata, manifest, spine, guide } = await this.processEpub(epub);
+
+    const orderedManifest = this.orderManifestItems(manifest.text, spine);
+    const volume: Array<ISection> = [];
+
+    for await (const item of orderedManifest) {
+      const entry = entries.find((entry) => entry.endsWith(item.href));
+      const fileBuffer = await epub.entryData(entry);
+      const fileAsString = fileBuffer.toString();
+
+      this.sectionService
+        .createSection(item, fileAsString)
+        .then((section) => volume.push(section));
+    }
+
+    return {
+      metadata,
+      ordered_manifest: orderedManifest,
+      spine,
+      guide,
+      volume,
+    };
+  }
+
+  async streamVolumeSection(sectionDto: SectionDto) {
+    const { volume_id, section_number } = sectionDto;
+    const epub = await this.epubStream(volume_id);
+    const entries = this.formatEntries(await epub.entries());
+
+    const { manifest, spine } = await this.processEpub(epub);
+
+    const orderedManifest = this.orderManifestItems(manifest.text, spine);
+
+    const section = orderedManifest.find(
+      (item) => item.order == section_number,
+    );
+
+    const entry = entries.find((entry) => entry.endsWith(section.href));
+    const fileBuffer = await epub.entryData(entry);
+    const fileAsString = fileBuffer.toString();
+
+    return this.sectionService.createSection(section, fileAsString);
+  }
+
+  private async processEpub(epub) {
     const containerBuffer = await epub.entryData('META-INF/container.xml');
     const containerXml: string = containerBuffer.toString();
     const opfPath: any = await getOpfFilePath(containerXml);
@@ -46,19 +90,7 @@ export class StreamService {
       opfObject.package.guide,
     );
 
-    const orderedManifest = this.orderManifestItems(manifest.text, spine);
-    const volume: Array<ISection> = [];
-
-    for await (const item of orderedManifest) {
-      const entry = entries.find((entry) => entry.endsWith(item.href));
-      const fileBuffer = await epub.entryData(entry);
-      const fileAsString = fileBuffer.toString();
-      this.sectionService
-        .createSection(item, fileAsString)
-        .then((section) => volume.push(section));
-    }
-
-    return { metadata, orderedManifest, spine, guide, volume };
+    return { metadata, manifest, spine, guide };
   }
 
   private formatEntries(entries: any) {
