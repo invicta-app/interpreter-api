@@ -1,4 +1,8 @@
-import { Injectable, InternalServerErrorException } from '@nestjs/common';
+import {
+  BadRequestException,
+  Injectable,
+  InternalServerErrorException,
+} from '@nestjs/common';
 import * as StreamZip from 'node-stream-zip';
 import { processXml } from '../xml/xml-processor';
 import { OpfObject } from '../types/opf/opf.type';
@@ -61,6 +65,11 @@ export class StreamService {
       (item) => item.order == section_number,
     );
 
+    if (!section)
+      throw new BadRequestException(
+        `Section ${section_number} not found in the requested resource.`,
+      );
+
     const entry = entries.find((entry) => entry.endsWith(section.href));
     const fileBuffer = await epub.entryData(entry);
     const fileAsString = fileBuffer.toString();
@@ -74,6 +83,10 @@ export class StreamService {
     const opfPath: any = await getOpfFilePath(containerXml);
     const opfBuffer = await epub.entryData(opfPath);
     const opfXml = opfBuffer.toString();
+
+    // TODO
+    // Introduce toc.xhtml for more detailed table of contents
+    // Spine seems to be contain limited information
 
     const opfObject: OpfObject = await processXml(opfXml);
 

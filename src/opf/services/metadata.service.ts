@@ -62,8 +62,6 @@ export class MetadataService {
 
     const arr: Array<{ id: string; type: string }> = [];
 
-    console.log('array:', identifiers);
-
     identifiers.map((id) => {
       if (typeof id === 'string') {
         if (id.includes('uuid')) arr.push({ type: 'uuid', id });
