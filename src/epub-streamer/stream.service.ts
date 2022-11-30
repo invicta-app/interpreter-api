@@ -43,6 +43,12 @@ export class StreamService {
         .then((section) => volume.push(section));
     }
 
+    let itemLength = 0;
+
+    volume.forEach((item) => (itemLength += 1 + item.text.length));
+
+    console.log('POSTGRES ITEM LENGTH', itemLength);
+
     return {
       metadata,
       ordered_manifest: orderedManifest,
