@@ -1,6 +1,6 @@
 import { Controller, Get, Param } from '@nestjs/common';
 import { StreamService } from './stream.service';
-import { SectionDto } from './dto/section.dto';
+import { SectionDto } from '../dto/section.dto';
 
 @Controller('stream')
 export class StreamController {

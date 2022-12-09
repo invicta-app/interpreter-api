@@ -1,6 +1,6 @@
 import { Injectable } from '@nestjs/common';
-import { OpfMetadata } from '../../types/opf/opf.type';
-import { Metadata, MetadataIdentifiers } from '../../types/metadata.types';
+import { OpfMetadata } from '../../../types/opf/opf.type';
+import { Metadata, MetadataIdentifiers } from '../../../types/metadata.types';
 
 @Injectable()
 export class MetadataService {

@@ -16,7 +16,8 @@ export type TextModifier =
   | 'strong'
   | 'span'
   | 'emphasize'
-  | 'break';
+  | 'break'
+  | 'small';
 
 export type TextHeader =
   | 'header_1'

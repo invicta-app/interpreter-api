@@ -1,4 +1,4 @@
-import { processXml } from '../xml/xml-processor';
+import { processXml } from './xml-processor';
 
 export const getOpfFilePath = async (containerXml: string) => {
   const xml = await processXml(containerXml);

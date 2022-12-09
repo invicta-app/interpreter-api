@@ -1,11 +1,12 @@
 import { Module } from '@nestjs/common';
 import { StreamController } from './stream.controller';
 import { StreamService } from './stream.service';
-import { OpfModule } from '../opf/opf.module';
 import { SectionService } from '../services/section.service';
+import { EpubModule } from '../modules/epub/epub.module';
+import { OpfModule } from '../modules/opf/opf.module';
 
 @Module({
-  imports: [OpfModule],
+  imports: [EpubModule, OpfModule],
   controllers: [StreamController],
   providers: [StreamService, SectionService],
 })

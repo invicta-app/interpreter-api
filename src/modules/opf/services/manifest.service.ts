@@ -1,6 +1,6 @@
 import { Injectable } from '@nestjs/common';
-import { OpfManifest, OpfManifestItem } from '../../types/opf/opf.type';
-import { ManifestTypes, Manifest } from '../../types/manifest.types';
+import { OpfManifest, OpfManifestItem } from '../../../types/opf/opf.type';
+import { ManifestTypes, Manifest } from '../../../types/manifest.types';
 
 @Injectable()
 export class ManifestService {

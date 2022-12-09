@@ -1,17 +1,19 @@
 import { Module } from '@nestjs/common';
-import { ParserModule } from './parser/parser.module';
-import { StreamModule } from './epub-streamer/stream.module';
+import { StreamModule } from './stream/stream.module';
 import { RouterModule } from '@nestjs/core';
-import { OpfModule } from './opf/opf.module';
+import { OpfModule } from './modules/opf/opf.module';
+import { UploadModule } from './download/upload.module';
+import { EpubModule } from './modules/epub/epub.module';
 
 @Module({
   imports: [
-    ParserModule,
     StreamModule,
     OpfModule,
+    UploadModule,
+    EpubModule,
     RouterModule.register([
       { path: 'api/v1', module: StreamModule },
-      { path: 'api/v1', module: ParserModule },
+      { path: 'api/v1', module: UploadModule },
     ]),
   ],
   providers: [],

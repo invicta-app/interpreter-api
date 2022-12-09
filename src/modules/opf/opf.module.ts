@@ -14,6 +14,12 @@ import { GuideService } from './services/guide.service';
     SpineService,
     GuideService,
   ],
-  exports: [OpfService],
+  exports: [
+    OpfService,
+    ManifestService,
+    MetadataService,
+    SpineService,
+    GuideService,
+  ],
 })
 export class OpfModule {}
