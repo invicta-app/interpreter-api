@@ -1,8 +1,13 @@
-import { BadRequestException, Injectable } from '@nestjs/common';
+import {
+  BadRequestException,
+  Injectable,
+  InternalServerErrorException,
+} from '@nestjs/common';
 import { SectionService } from '../services/section.service';
 import { ISection } from '../types/section.interface';
 import { SectionDto } from '../dto/section.dto';
 import { EpubService } from '../modules/epub/epub.service';
+import axios from 'axios';
 
 @Injectable()
 export class UploadService {
@@ -11,11 +16,13 @@ export class UploadService {
     private sectionService: SectionService,
   ) {}
 
-  async downloadVolume(volume_id: string, opts?: any) {
+  async uploadVolume(volume_id: string, opts?: { revise_title?: string }) {
     const epub = await this.epub.stream(volume_id);
     const entries = this.epub.formatEntries(await epub.entries());
 
     const { metadata, manifest, spine } = await this.epub.process(epub);
+
+    if (opts.revise_title) metadata.title = opts.revise_title;
 
     const orderedManifest = this.epub.orderManifestItems(manifest.text, spine);
 
@@ -33,12 +40,15 @@ export class UploadService {
 
     const body = { metadata, volume };
 
-    // return {
-    //   metadata,
-    //   spine,
-    //   guide,
-    //   volume,
-    // };
+    const url = process.env.INVICTA_API + '/volumes/api/v1/books';
+
+    try {
+      const res = await axios.post(url, body);
+      console.log('SUCCESS ✅');
+      return res.data;
+    } catch (err) {
+      throw new InternalServerErrorException(err);
+    }
   }
 
   async updateSection(sectionDto: SectionDto) {

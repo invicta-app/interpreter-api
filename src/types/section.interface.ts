@@ -1,7 +1,9 @@
 export interface ISection {
   id: string;
-  text: any;
+  data: any;
   body_id?: string;
   body_class?: string;
+  length?: number;
+  metadata?: any;
   section: number;
 }

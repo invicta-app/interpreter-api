@@ -1,22 +1,22 @@
-import { Controller, Put, Post, Param } from '@nestjs/common';
+import { Controller, Put, Post, Param, Query } from '@nestjs/common';
 import { UploadService } from './upload.service';
 
-@Controller('download')
+@Controller('upload')
 export class UploadController {
-  constructor(private readonly downloadService: UploadService) {}
+  constructor(private readonly uploadService: UploadService) {}
 
   @Post('/:volume_id')
   downloadVolume(
     @Param('volume_id') id: string,
-    @Param('revised_title') revised_title: string,
+    @Query('revise_title') revise_title: string,
   ) {
-    const opts = { revised_title: revised_title };
-    return this.downloadService.downloadVolume(id, opts);
+    const opts = { revise_title };
+    return this.uploadService.uploadVolume(id, opts);
   }
 
   @Put('/:volume_id')
   updateVolume(@Param('volume_id') id: string) {
-    return this.downloadService.overwriteVolume(id);
+    return this.uploadService.overwriteVolume(id);
   }
 
   @Put('/:volume_id/section/:section')
@@ -24,7 +24,7 @@ export class UploadController {
     @Param('volume_id') volume_id: string,
     @Param('section') section: number,
   ) {
-    return this.downloadService.updateSection({
+    return this.uploadService.updateSection({
       volume_id: volume_id,
       section_number: section,
     });
