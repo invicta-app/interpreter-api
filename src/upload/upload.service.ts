@@ -8,6 +8,7 @@ import { ISection } from '../types/section.interface';
 import { SectionDto } from '../dto/section.dto';
 import { EpubService } from '../modules/epub/epub.service';
 import axios from 'axios';
+import { Metadata } from '../types/metadata.types';
 
 @Injectable()
 export class UploadService {
@@ -38,16 +39,14 @@ export class UploadService {
         .then((section) => volume.push(section));
     }
 
-    const body = { metadata, volume };
-
-    const url = process.env.INVICTA_API + '/volumes/api/v1/books';
+    const body = { volume, metadata: this.handleMetadata(metadata) };
 
     try {
+      const url = process.env.INVICTA_API + '/volumes/api/v1/books';
       const res = await axios.post(url, body);
-      console.log('SUCCESS ✅');
       return res.data;
     } catch (err) {
-      throw new InternalServerErrorException(err);
+      throw new InternalServerErrorException(err.message);
     }
   }
 
@@ -77,4 +76,14 @@ export class UploadService {
   }
 
   async overwriteVolume(volume_id: string) {}
+
+  handleMetadata(metadata: Metadata) {
+    if (!metadata.subjects) metadata.subjects = [];
+    if (!metadata.author) metadata.author = 'Unknown';
+    if (!metadata.description) metadata.description = '';
+    if (!metadata.identifiers) metadata.identifiers = []; // create identifier ?
+    if (!metadata.rights) metadata.rights = '';
+
+    return metadata;
+  }
 }

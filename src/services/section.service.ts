@@ -15,11 +15,8 @@ export class SectionService {
     const section: ISection = {
       id: item.id,
       data: content,
-      body_id: xml?.html?.body?.id,
-      body_class: xml?.html?.body?.class,
       length: content?.data?.length,
       section: item.order,
-      metadata: {},
     };
 
     return section as ISection;
@@ -75,7 +72,6 @@ export class SectionService {
     return {
       text: text,
       content_type: contentType,
-      length: text.length,
       metadata: {},
     };
   }
