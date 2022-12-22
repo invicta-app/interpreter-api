@@ -1,5 +1,6 @@
 export interface ISection {
-  id: string;
+  ref_id: string;
+  title: string;
   data: any;
   length: number;
   section: number;

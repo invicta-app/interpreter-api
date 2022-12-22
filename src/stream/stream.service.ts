@@ -17,10 +17,10 @@ export class StreamService {
     const epub = await this.epub.stream(volume_id);
     const entries = this.epub.formatEntries(await epub.entries());
 
-    const { metadata, manifest, spine, guide } = await this.epub.process(epub);
+    const { metadata, manifest, spine } = await this.epub.process(epub);
 
     const orderedManifest = this.epub.orderManifestItems(manifest.text, spine);
-    const volume: Array<ISection> = [];
+    const sections: Array<Partial<ISection>> = [];
 
     for await (const item of orderedManifest) {
       const entry = entries.find((entry) => entry.endsWith(item.href));
@@ -29,20 +29,16 @@ export class StreamService {
 
       this.sectionService
         .createSection(item, fileAsString)
-        .then((section) => volume.push(section));
+        .then((section) => sections.push(section));
     }
 
-    let contentCount = 0;
-    volume.forEach((section) => (contentCount += section.data.length));
-    metadata.content_count = contentCount;
+    metadata.content_count = this.getContentCount(sections);
 
     return {
       metadata,
       ordered_manifest: orderedManifest,
-      content_count: contentCount,
       spine,
-      guide,
-      volume,
+      volume: sections,
     };
   }
 
@@ -69,5 +65,11 @@ export class StreamService {
     const fileAsString = fileBuffer.toString();
 
     return this.sectionService.createSection(section, fileAsString);
+  }
+
+  private getContentCount(sections: Array<Partial<ISection>>) {
+    let contentCount = 0;
+    sections.forEach((section) => (contentCount += section.data.length));
+    return contentCount;
   }
 }

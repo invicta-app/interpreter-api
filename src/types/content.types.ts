@@ -10,23 +10,26 @@ export type ContentPartial = Partial<Content> &
   Pick<Content, 'href' | 'href_id'>;
 
 export type TextModifier =
-  | 'italicize'
-  | 'quote'
-  | 'link'
+  | 'i'
+  | 'q'
+  | 'a'
   | 'strong'
   | 'span'
   | 'emphasize'
-  | 'break'
+  | 'em'
+  | 'br'
   | 'small';
 
-export type TextHeader =
-  | 'header_1'
-  | 'header_2'
-  | 'header_3'
-  | 'header_4'
-  | 'header_5'
-  | 'header_6';
+export type TextHeader = 'h1' | 'h2' | 'h3' | 'h4' | 'h5' | 'h6';
 
-export type TextBlock = 'paragraph' | 'title' | 'blockquote';
+export type TextBlock = 'p' | 'title' | 'blockquote';
 
 export type ContentBlock = TextBlock | TextHeader;
+
+export interface NodeMetadata {
+  class?: string;
+  id?: string;
+  href?: string;
+}
+
+export type ContentMetadata = any;

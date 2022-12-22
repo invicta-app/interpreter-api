@@ -4,7 +4,7 @@ import { Metadata, MetadataIdentifiers } from '../../../types/metadata.types';
 
 @Injectable()
 export class MetadataService {
-  async processMetadata(metadata: OpfMetadata) {
+  processMetadata(metadata: OpfMetadata) {
     const map = {};
 
     map['title'] = this.getProperty(metadata['dc:title']);
@@ -15,7 +15,6 @@ export class MetadataService {
     map['date_published'] = this.getProperty(metadata['dc:date']);
     map['rights'] = this.getProperty(metadata['dc:rights']);
     map['publisher'] = this.getProperty(metadata['dc:publisher'] || null);
-
     map['contributors'] = this.getContributors(metadata['dc:contributor']);
     map['identifiers'] = this.getIdentifiers(metadata['dc:identifier']);
 

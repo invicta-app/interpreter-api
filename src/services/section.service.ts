@@ -3,23 +3,31 @@ import { ManifestItem } from '../types/manifest.types';
 import { ISection } from '../types/section.interface';
 import { processXml } from '../helpers/xml-processor';
 import { isArray } from '../helpers/validatePrimitives';
-import { ContentBlock, TextModifier } from '../types/content.types';
+import {
+  ContentBlock,
+  ContentMetadata,
+  NodeMetadata,
+  TextModifier,
+} from '../types/content.types';
 
 @Injectable()
 export class SectionService {
   async createSection(item: ManifestItem, fileAsString: string) {
     const xml = await processXml(fileAsString, { preserveOrder: true });
 
-    const content = await this.drillXml(xml);
+    console.log('XML:', JSON.stringify(xml, null, 2));
 
-    const section: ISection = {
-      id: item.id,
+    const nodes = await this.drillXml(xml);
+    const content = this.formatNodes(nodes);
+
+    const section: Partial<ISection> = {
+      ref_id: item.id,
       data: content,
-      length: content?.data?.length,
+      length: content?.length,
       section: item.order,
     };
 
-    return section as ISection;
+    return section as Partial<ISection>;
   }
 
   private drillXml(node: any) {
@@ -29,7 +37,7 @@ export class SectionService {
       nodes = nodes.filter((n) => n.text !== '');
       nodes = nodes.flat();
 
-      return this.formatNodes(nodes);
+      return nodes;
     }
 
     // Unique Elements
@@ -44,69 +52,69 @@ export class SectionService {
     if (node?.div) return this.drillXml(node.div);
 
     // Content Blocks
-    if (node?.p) return this.handleContentBlock(node.p, 'paragraph');
-    if (node?.title) return this.handleContentBlock(node.title, 'title');
-    if (node?.blockquote)
-      return this.handleContentBlock(node.blockquote, 'blockquote');
-    if (node?.h1) return this.handleContentBlock(node.h1, 'header_1');
-    if (node?.h2) return this.handleContentBlock(node.h2, 'header_2');
-    if (node?.h3) return this.handleContentBlock(node.h3, 'header_3');
-    if (node?.h4) return this.handleContentBlock(node.h2, 'header_4');
-    if (node?.h5) return this.handleContentBlock(node.h5, 'header_5');
-    if (node?.h6) return this.handleContentBlock(node.h6, 'header_6');
+    if (node?.p) return this.handleContentBlock(node, 'p');
+    if (node?.title) return this.handleContentBlock(node, 'title');
+    if (node?.blockquote) return this.handleContentBlock(node, 'blockquote');
+    if (node?.h1) return this.handleContentBlock(node, 'h1');
+    if (node?.h2) return this.handleContentBlock(node, 'h2');
+    if (node?.h3) return this.handleContentBlock(node, 'h3');
+    if (node?.h4) return this.handleContentBlock(node, 'h4');
+    if (node?.h5) return this.handleContentBlock(node, 'h5');
+    if (node?.h6) return this.handleContentBlock(node, 'h6');
 
     // Text Modifiers
-    if (node?.span) return this.handleTextModifier(node.span, 'span');
-    if (node?.i) return this.handleTextModifier(node.i, 'italicize');
-    if (node?.q) return this.handleTextModifier(node.q, 'quote');
-    if (node?.a) return this.handleTextModifier(node.a, 'link');
-    if (node?.strong) return this.handleTextModifier(node.strong, 'strong');
-    if (node?.br) return this.handleTextModifier(node.br, 'break');
-    if (node?.small) return this.handleTextModifier(node.small, 'small');
+    if (node?.span) return this.handleTextModifier(node, 'span');
+    if (node?.i) return this.handleTextModifier(node, 'i');
+    if (node?.q) return this.handleTextModifier(node, 'q');
+    if (node?.a) return this.handleTextModifier(node, 'a');
+    if (node?.strong) return this.handleTextModifier(node, 'strong');
+    if (node?.br) return this.handleTextModifier(node, 'br');
+    if (node?.small) return this.handleTextModifier(node, 'small');
   }
 
   private handleContentBlock(node, contentType: ContentBlock) {
-    const response = this.drillXml(node);
+    const child = node[contentType];
+    const response = this.drillXml(child);
+    const metadata = this.handleMetadata(node);
+
     if (!response) return;
 
     if (this.isStringArray(response)) {
       return {
         text: response.join(' '),
         content_type: contentType,
-        metadata: {},
+        metadata: metadata,
       };
     }
 
-    if (node[1])
+    if (node[1]) {
+      console.log('NODES:', node);
       throw new InternalServerErrorException(
         'FUCK!',
         'multiple content nodes are possible.',
       );
+    }
 
-    response[0].metadata.content_type ||= [];
-    response[0].metadata.content_type.push(contentType);
+    response[0].metadata = metadata;
+    response[0].metadata.content_types ||= [];
+    response[0].metadata.content_types.push(contentType);
     return response[0];
   }
 
   private handleTextModifier(node, modifier?: TextModifier) {
-    const nodes = this.drillXml(node);
-    const text = this.joinNodes(nodes);
+    const child = node[modifier];
+    const nodes = this.drillXml(child);
+    const rawText = this.joinNodes(nodes);
 
-    const [before, after] = this.handleModifierSpacing(modifier);
+    const text = this.handleModifierSpacing(rawText, modifier);
 
-    if (modifier === 'span') return `${before}${text}${after}`;
-    if (modifier === 'italicize') return `${before}*${text}*${after}`;
-    if (modifier === 'emphasize') return `${before}**${text}**${after}`;
-    if (modifier === 'strong') return `${before}**${text}**${after}`;
-    if (modifier === 'quote') return `${before}**${text}**${after}`;
-    if (modifier === 'link') return `${before}${text}${after}`; // TODO
-    if (modifier === 'break') return `\n`; // TODO
-    if (modifier === 'small') return `${before}${text}${after}`;
-    if (modifier === 'super') return `${before}${text}${after}`;
+    return text;
 
-    throw new InternalServerErrorException(
-      `Unidentified text modifier: ${modifier}`,
-    );
+    // TODO - IMPORANT!!!
+    // return {
+    //   text,
+    //   metadata: this.handleMetadata(node),
+    // };
   }
 
   private joinNodes(nodes: Array<any>) {
@@ -124,7 +132,7 @@ export class SectionService {
     return processedText;
   }
 
-  private formatNodes(nodes: Array<any>) {
+  private formatNodes(nodes: Array<any>): any {
     if (this.isStringArray(nodes)) return nodes;
 
     return nodes.map((node, index) => {
@@ -134,13 +142,36 @@ export class SectionService {
     });
   }
 
-  private handleModifierSpacing(modifier: TextModifier): [string, string] {
-    if (modifier === 'small') return ['', ''];
+  private handleModifierSpacing(text: string, modifier: TextModifier): string {
+    const [before, after] = ['', ''];
 
-    return [' ', ' '];
+    if (modifier === 'span') return `${before}${text}${after}`;
+    if (modifier === 'i') return `${before}*${text}*${after}`;
+    if (modifier === 'emphasize') return `${before}**${text}**${after}`;
+    if (modifier === 'strong') return `${before}**${text}**${after}`;
+    if (modifier === 'q') return `${before}**${text}**${after}`;
+    if (modifier === 'a') return `${before}${text}${after}`; // TODO
+    if (modifier === 'br') return `\n`; // TODO
+    if (modifier === 'small') return `${before}${text}${after}`;
+
+    throw new InternalServerErrorException(
+      `Unidentified text modifier: ${modifier}`,
+    );
   }
 
   private isStringArray(nodes: any) {
     return nodes.every((node) => typeof node === 'string');
+  }
+
+  private handleMetadata(node: any) {
+    const raw: NodeMetadata = node[':@'];
+
+    console.log('RAW:', raw);
+
+    const metadata: ContentMetadata = {};
+    if (raw?.id) metadata.ref_id = raw.id;
+    if (raw?.href) metadata.href = raw.href;
+
+    return metadata;
   }
 }

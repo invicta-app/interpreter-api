@@ -20,13 +20,10 @@ export class UploadService {
   async uploadVolume(volume_id: string, opts?: { revise_title?: string }) {
     const epub = await this.epub.stream(volume_id);
     const entries = this.epub.formatEntries(await epub.entries());
-    const { metadata, manifest, spine, guide } = await this.epub.process(epub);
-
-    const tableOfContents = await this.handleTableOfContents('', epub, entries);
+    const { metadata, manifest, spine } = await this.epub.process(epub);
 
     const orderedManifest = this.epub.orderManifestItems(manifest.text, spine);
-
-    const volume: Array<ISection> = [];
+    const sections: Array<Partial<ISection>> = [];
 
     for await (const item of orderedManifest) {
       const entry = entries.find((entry) => entry.endsWith(item.href));
@@ -35,21 +32,22 @@ export class UploadService {
 
       this.sectionService
         .createSection(item, fileAsString)
-        .then((section) => volume.push(section));
+        .then((section) => sections.push(section));
     }
 
     if (opts.revise_title) metadata.title = opts.revise_title;
-    const body = { volume, metadata: this.handleMetadata(metadata) };
+    metadata.content_count = this.getContentCount(sections);
+    const body = { volume: sections, metadata: this.handleMetadata(metadata) };
 
     return 'Success!';
 
-    // try {
-    //   const url = process.env.INVICTA_API + '/volumes/api/v1/books';
-    //   const res = await axios.post(url, body);
-    //   return res.data;
-    // } catch (err) {
-    //   throw new InternalServerErrorException(err.message);
-    // }
+    try {
+      const url = process.env.INVICTA_API + '/volumes/api/v1/books';
+      const res = await axios.post(url, body);
+      return res.data;
+    } catch (err) {
+      throw new InternalServerErrorException(err.message);
+    }
   }
 
   async updateSection(sectionDto: SectionDto) {
@@ -89,13 +87,9 @@ export class UploadService {
     return metadata;
   }
 
-  private async handleTableOfContents(
-    file_id: string,
-    epub: any,
-    entries: string[],
-  ) {
-    const entry = entries.find((entry) => entry.endsWith(file_id));
-    const fileBuffer = await epub.entryData(entry);
-    const fileAsString = fileBuffer.toString();
+  private getContentCount(sections: Array<Partial<ISection>>) {
+    let contentCount = 0;
+    sections.forEach((section) => (contentCount += section.data.length));
+    return contentCount;
   }
 }
