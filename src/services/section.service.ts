@@ -33,6 +33,7 @@ export class SectionService {
     }
 
     // Unique Elements
+    if (node?.text && node?.contentType) return node;
     if (node?.text) return this.processText(node.text);
 
     // Higher Level XML Components
@@ -59,21 +60,32 @@ export class SectionService {
     if (node?.i) return this.handleTextModifier(node.i, 'italicize');
     if (node?.q) return this.handleTextModifier(node.q, 'quote');
     if (node?.a) return this.handleTextModifier(node.a, 'link');
-    if (node?.s) return this.handleTextModifier(node.s, 'strong');
     if (node?.strong) return this.handleTextModifier(node.strong, 'strong');
     if (node?.br) return this.handleTextModifier(node.br, 'break');
     if (node?.small) return this.handleTextModifier(node.small, 'small');
   }
 
   private handleContentBlock(node, contentType: ContentBlock) {
-    const text = this.drillXml(node)?.join(' ');
-    if (!text) return;
+    const response = this.drillXml(node);
+    if (!response) return;
 
-    return {
-      text: text,
-      content_type: contentType,
-      metadata: {},
-    };
+    if (this.isStringArray(response)) {
+      return {
+        text: response.join(' '),
+        content_type: contentType,
+        metadata: {},
+      };
+    }
+
+    if (node[1])
+      throw new InternalServerErrorException(
+        'FUCK!',
+        'multiple content nodes are possible.',
+      );
+
+    response[0].metadata.content_type ||= [];
+    response[0].metadata.content_type.push(contentType);
+    return response[0];
   }
 
   private handleTextModifier(node, modifier?: TextModifier) {
@@ -113,9 +125,7 @@ export class SectionService {
   }
 
   private formatNodes(nodes: Array<any>) {
-    const isStringArray = nodes.every((node) => typeof node === 'string');
-
-    if (isStringArray) return nodes;
+    if (this.isStringArray(nodes)) return nodes;
 
     return nodes.map((node, index) => {
       node.sequence = index;
@@ -128,5 +138,9 @@ export class SectionService {
     if (modifier === 'small') return ['', ''];
 
     return [' ', ' '];
+  }
+
+  private isStringArray(nodes: any) {
+    return nodes.every((node) => typeof node === 'string');
   }
 }
