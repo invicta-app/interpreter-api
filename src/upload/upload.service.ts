@@ -39,8 +39,6 @@ export class UploadService {
     metadata.content_count = this.getContentCount(sections);
     const body = { volume: sections, metadata: this.handleMetadata(metadata) };
 
-    return 'Success!';
-
     try {
       const url = process.env.INVICTA_API + '/volumes/api/v1/books';
       const res = await axios.post(url, body);
