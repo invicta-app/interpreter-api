@@ -15,8 +15,6 @@ export class SectionService {
   async createSection(item: ManifestItem, fileAsString: string) {
     const xml = await processXml(fileAsString, { preserveOrder: true });
 
-    console.log('XML:', JSON.stringify(xml, null, 2));
-
     const nodes = await this.drillXml(xml);
     const content = this.formatNodes(nodes);
 
@@ -165,8 +163,6 @@ export class SectionService {
 
   private handleMetadata(node: any) {
     const raw: NodeMetadata = node[':@'];
-
-    console.log('RAW:', raw);
 
     const metadata: ContentMetadata = {};
     if (raw?.id) metadata.ref_id = raw.id;

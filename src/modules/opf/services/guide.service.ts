@@ -11,7 +11,7 @@ export class GuideService {
 
   getTocNcxRef(guide: OpfGuide): string {
     if (!guide) return;
-    if (guide.reference) {
+    if (Array.isArray(guide.reference)) {
       const tocRef = guide.reference.find((item) => item.type === 'toc');
       if (tocRef) return tocRef.href;
       else return null;
