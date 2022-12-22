@@ -9,11 +9,12 @@ export class GuideService {
     return;
   }
 
-  async getTocHref(guide: OpfGuide) {
+  getTocNcxRef(guide: OpfGuide): string {
     if (!guide) return;
-    if (Array.isArray(guide.reference)) {
+    if (guide.reference) {
       const tocRef = guide.reference.find((item) => item.type === 'toc');
-      return tocRef;
+      if (tocRef) return tocRef.href;
+      else return null;
     }
   }
 }
