@@ -10,6 +10,7 @@ export type Metadata = {
   rights?: string;
   identifiers: Array<{ id: string; type: string }>;
   contributors: Array<{ contributor: string; type: string }>;
+  content_count: number;
 };
 
 export type MetadataIdentifiers = {

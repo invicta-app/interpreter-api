@@ -1,20 +1,7 @@
-import {
-  BadRequestException,
-  Injectable,
-  InternalServerErrorException,
-} from '@nestjs/common';
-import * as StreamZip from 'node-stream-zip';
-import { processXml } from '../helpers/xml-processor';
-import { OpfObject } from '../types/opf/opf.type';
-import { Metadata } from '../types/metadata.types';
-import { Manifest, ManifestItem } from '../types/manifest.types';
-import { Spine } from '../types/spine.type';
-import { Guide } from '../types/guide.types';
+import { BadRequestException, Injectable } from '@nestjs/common';
 import { OpfService } from '../modules/opf/services/opf.service';
 import { SectionService } from '../services/section.service';
 import { ISection } from '../types/section.interface';
-import { getRootPath } from '../helpers/rootPath';
-import { getOpfFilePath } from '../helpers/getOpfFilePath';
 import { SectionDto } from '../dto/section.dto';
 import { EpubService } from '../modules/epub/epub.service';
 
@@ -45,9 +32,14 @@ export class StreamService {
         .then((section) => volume.push(section));
     }
 
+    let contentCount = 0;
+    volume.forEach((section) => (contentCount += section.data.length));
+    metadata.content_count = contentCount;
+
     return {
       metadata,
       ordered_manifest: orderedManifest,
+      content_count: contentCount,
       spine,
       guide,
       volume,

@@ -20,10 +20,9 @@ export class UploadService {
   async uploadVolume(volume_id: string, opts?: { revise_title?: string }) {
     const epub = await this.epub.stream(volume_id);
     const entries = this.epub.formatEntries(await epub.entries());
+    const { metadata, manifest, spine, guide } = await this.epub.process(epub);
 
-    const { metadata, manifest, spine } = await this.epub.process(epub);
-
-    if (opts.revise_title) metadata.title = opts.revise_title;
+    const tableOfContents = await this.handleTableOfContents('', epub, entries);
 
     const orderedManifest = this.epub.orderManifestItems(manifest.text, spine);
 
@@ -39,15 +38,18 @@ export class UploadService {
         .then((section) => volume.push(section));
     }
 
+    if (opts.revise_title) metadata.title = opts.revise_title;
     const body = { volume, metadata: this.handleMetadata(metadata) };
 
-    try {
-      const url = process.env.INVICTA_API + '/volumes/api/v1/books';
-      const res = await axios.post(url, body);
-      return res.data;
-    } catch (err) {
-      throw new InternalServerErrorException(err.message);
-    }
+    return 'Success!';
+
+    // try {
+    //   const url = process.env.INVICTA_API + '/volumes/api/v1/books';
+    //   const res = await axios.post(url, body);
+    //   return res.data;
+    // } catch (err) {
+    //   throw new InternalServerErrorException(err.message);
+    // }
   }
 
   async updateSection(sectionDto: SectionDto) {
@@ -85,5 +87,15 @@ export class UploadService {
     if (!metadata.rights) metadata.rights = '';
 
     return metadata;
+  }
+
+  private async handleTableOfContents(
+    file_id: string,
+    epub: any,
+    entries: string[],
+  ) {
+    const entry = entries.find((entry) => entry.endsWith(file_id));
+    const fileBuffer = await epub.entryData(entry);
+    const fileAsString = fileBuffer.toString();
   }
 }
