@@ -1,7 +1,7 @@
 import { Injectable, InternalServerErrorException } from '@nestjs/common';
 import { Manifest, ManifestItem } from '../../types/manifest.types';
 import { getRootPath } from '../../helpers/rootPath';
-import StreamZip from 'node-stream-zip';
+import * as StreamZip from 'node-stream-zip';
 import { processXml } from '../../helpers/xml-processor';
 import { Guide } from '../../types/guide.types';
 import { Spine } from '../../types/spine.type';
@@ -17,7 +17,6 @@ export class EpubService {
   async stream(book_id: string) {
     const path = getRootPath(book_id);
 
-    console.log('path:', path);
     try {
       return await new StreamZip.async({
         file: path,

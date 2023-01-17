@@ -19,6 +19,7 @@ export class UploadService {
 
   async uploadVolume(volume_id: string, opts?: { revise_title?: string }) {
     const epub = await this.epub.stream(volume_id);
+
     const entries = this.epub.formatEntries(await epub.entries());
     const { metadata, manifest, spine } = await this.epub.process(epub);
 
@@ -40,11 +41,14 @@ export class UploadService {
     const body = { volume: sections, metadata: this.handleMetadata(metadata) };
 
     try {
-      const url = process.env.INVICTA_API + '/volumes/api/v1/books';
+      const url = process.env.INVICTA_API + '/api/v1/books';
       const res = await axios.post(url, body);
       return res.data;
     } catch (err) {
-      throw new InternalServerErrorException(err.message);
+      throw new InternalServerErrorException(
+        'Invicta API request failed',
+        err.message,
+      );
     }
   }
 
