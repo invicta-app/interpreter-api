@@ -21,8 +21,11 @@ export class UploadService {
     const epub = await this.epub.stream(volume_id);
 
     const entries = this.epub.formatEntries(await epub.entries());
-    const { metadata, manifest, spine } = await this.epub.process(epub);
+    const { metadata, manifest, spine, tocHrefs } = await this.epub.process(
+      epub,
+    );
 
+    const tableOfContents = this.epub.createTableOfContents(epub, tocHrefs);
     const orderedManifest = this.epub.orderManifestItems(manifest.text, spine);
     const sections: Array<Partial<ISection>> = [];
 

@@ -1,9 +1,9 @@
 import { Injectable } from '@nestjs/common';
 
 @Injectable()
-export class NcxService {
-  async processTocNcx(tocNcx: any) {
-    // console.log('TABLE OF CONTENTS:', JSON.stringify(tocNcx, null, 2));
+export class TocNcxService {
+  async processTocNcx(tocObj: any) {
+    console.log('TABLE OF CONTENTS:', JSON.stringify(tocObj, null, 2));
 
     return '';
   }

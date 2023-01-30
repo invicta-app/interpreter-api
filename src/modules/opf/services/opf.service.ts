@@ -2,7 +2,7 @@ import { Injectable } from '@nestjs/common';
 import { ManifestService } from './manifest.service';
 import { MetadataService } from './metadata.service';
 import { SpineService } from './spine.service';
-import { GuideService } from './guide.service';
+import { TocHrefService } from './tocHref.service';
 
 @Injectable()
 export class OpfService {
@@ -10,10 +10,11 @@ export class OpfService {
     private manifestServiceInjectable: ManifestService,
     private metadataServiceInjectable: MetadataService,
     private spineServiceInjectable: SpineService,
-    private guideServiceInjectable: GuideService,
+    private tocServiceInjectable: TocHrefService,
   ) {}
+
   metadataService = this.metadataServiceInjectable;
   manifestService = this.manifestServiceInjectable;
   spineService = this.spineServiceInjectable;
-  guideService = this.guideServiceInjectable;
+  tocService = this.tocServiceInjectable;
 }

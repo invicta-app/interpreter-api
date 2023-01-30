@@ -3,16 +3,17 @@ import { Manifest, ManifestItem } from '../../types/manifest.types';
 import { getRootPath } from '../../helpers/rootPath';
 import * as StreamZip from 'node-stream-zip';
 import { processXml } from '../../helpers/xml-processor';
-import { Guide } from '../../types/guide.types';
 import { Spine } from '../../types/spine.type';
 import { getOpfFilePath } from '../../helpers/getOpfFilePath';
-import { OpfObject } from '../../types/opf/opf.type';
+import { OpfObject } from '../../types/opf.type';
 import { Metadata } from '../../types/metadata.types';
 import { OpfService } from '../opf/services/opf.service';
+import { TocHref } from '../../types/tableOfContents.types';
+import { TocNcxService } from '../toc/services/tocNcx.service';
 
 @Injectable()
 export class EpubService {
-  constructor(private opf: OpfService) {}
+  constructor(private opf: OpfService, private tocNcxService: TocNcxService) {}
 
   async stream(book_id: string) {
     const path = getRootPath(book_id);
@@ -35,26 +36,38 @@ export class EpubService {
     const opfBuffer = await epub.entryData(opfPath);
     const opfXml = opfBuffer.toString();
 
-    // TODO
-    // Introduce toc.xhtml for more detailed table of contents
-    // Spine seems to be contain limited information
-
     const opfObject: OpfObject = await processXml(opfXml);
 
-    const metadata: Metadata = await this.opf.metadataService.processMetadata(
+    const metadata: Metadata = this.opf.metadataService.processMetadata(
       opfObject.package.metadata,
     );
-    const manifest: Manifest = await this.opf.manifestService.processManifest(
+    const manifest: Manifest = this.opf.manifestService.processManifest(
       opfObject.package.manifest,
     );
-    const spine: Spine = await this.opf.spineService.processSpine(
+    const spine: Spine = this.opf.spineService.processSpine(
       opfObject.package.spine,
     );
-    const guide: Guide = await this.opf.guideService.getTocHref(
-      opfObject.package.guide,
-    );
+    const tocHrefs: Array<TocHref> = this.opf.tocService.getTocHrefs(opfObject);
 
-    return { metadata, manifest, spine, guide };
+    return { metadata, manifest, spine, tocHrefs };
+  }
+
+  async createTableOfContents(epub: any, tocHrefs: Array<TocHref>) {
+    console.log('TOC HREFS:', tocHrefs);
+    const ncxHref = tocHrefs.find((item) => item.href.includes('toc.ncx')).href;
+
+    if (!ncxHref)
+      throw new InternalServerErrorException(
+        'EPUB does not contain toc.ncx declaration',
+      );
+
+    const tocBuffer = epub.entryData(ncxHref);
+    const tocXml = tocBuffer.toString();
+    const tocObject = await processXml(tocXml, { preserveOrder: true });
+
+    console.log('TOC OBJECT:', tocObject);
+
+    return this.tocNcxService.processTocNcx(tocObject);
   }
 
   formatEntries(entries: any) {

@@ -3,7 +3,7 @@ import { OpfService } from './services/opf.service';
 import { ManifestService } from './services/manifest.service';
 import { MetadataService } from './services/metadata.service';
 import { SpineService } from './services/spine.service';
-import { GuideService } from './services/guide.service';
+import { TocHrefService } from './services/tocHref.service';
 
 @Module({
   imports: [],
@@ -12,14 +12,16 @@ import { GuideService } from './services/guide.service';
     ManifestService,
     MetadataService,
     SpineService,
-    GuideService,
+    TocHrefService,
+    TocHrefService,
   ],
   exports: [
     OpfService,
     ManifestService,
     MetadataService,
     SpineService,
-    GuideService,
+    TocHrefService,
+    TocHrefService,
   ],
 })
 export class OpfModule {}

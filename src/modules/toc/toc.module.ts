@@ -1,9 +1,9 @@
 import { Module } from '@nestjs/common';
-import { NcxService } from './services/ncx.service';
+import { TocNcxService } from './services/tocNcx.service';
 
 @Module({
   imports: [],
-  providers: [NcxService],
-  exports: [NcxService],
+  providers: [TocNcxService],
+  exports: [TocNcxService],
 })
 export class TocModule {}
