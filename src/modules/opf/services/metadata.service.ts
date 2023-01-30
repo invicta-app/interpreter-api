@@ -1,5 +1,5 @@
 import { Injectable } from '@nestjs/common';
-import { OpfMetadata } from '../../../types/opf/opf.type';
+import { OpfMetadata } from '../../../types/opf.type';
 import { Metadata, MetadataIdentifiers } from '../../../types/metadata.types';
 
 @Injectable()
@@ -64,6 +64,7 @@ export class MetadataService {
     identifiers.map((id) => {
       if (typeof id === 'string') {
         if (id.includes('uuid')) arr.push({ type: 'uuid', id });
+        if (id.includes('uuid_id')) arr.push({ type: 'uuid', id });
         else if (id.includes('isbn')) arr.push({ type: 'isbn', id });
         else if (id.includes('mobi')) arr.push({ type: 'mobi_asin', id });
         else if (id.includes('calibre')) arr.push({ type: 'calibre', id });
@@ -87,6 +88,10 @@ export class MetadataService {
         return 'mobi_asin';
       case 'uuid':
         return 'uuid';
+      case 'ISBN':
+        return 'isbn';
+      case 'MOBI-ASIN':
+        return 'mobi_asin';
       default:
         return;
     }
