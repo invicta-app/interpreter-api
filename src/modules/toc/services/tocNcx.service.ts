@@ -1,19 +1,17 @@
 import { Injectable } from '@nestjs/common';
+import { TableOfContents } from '../../../types/tableOfContents.types';
 
 @Injectable()
 export class TocNcxService {
   async processTocNcx(tocObj: any) {
     console.log('TABLE OF CONTENTS:', JSON.stringify(tocObj, null, 2));
 
+    const segments: TableOfContents = this.drillXml(tocObj[0]);
+
     return '';
   }
 
   private drillXml(node: any) {
-    return '';
+    return node;
   }
 }
-
-const item = {
-  ref: '#filepos_123232',
-  title: 'Chapter 3: Fuck Off!',
-};

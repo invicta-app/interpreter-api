@@ -1,45 +1,33 @@
 import { Injectable, InternalServerErrorException } from '@nestjs/common';
-import { ManifestItem } from '../types/manifest.types';
-import { ISection } from '../types/section.interface';
-import { processXml } from '../helpers/xml-processor';
-import { isArray } from '../helpers/validatePrimitives';
+import { Segment, TableOfContents } from '../../../types/tableOfContents.types';
+import { isArray } from '../../../helpers/validatePrimitives';
 import {
   ContentBlock,
   ContentMetadata,
   NodeMetadata,
   TextModifier,
-} from '../types/content.types';
+} from '../../../types/content.types';
+import { splitFileHref } from '../../../helpers/splitFileHref';
 
 @Injectable()
-export class SectionService {
-  async createSection(item: ManifestItem, fileAsString: string) {
-    const xml = await processXml(fileAsString, { preserveOrder: true });
-
-    const nodes = await this.drillXml(xml);
-    const content = this.formatNodes(nodes);
-
-    const section: Partial<ISection> = {
-      ref_id: item.id,
-      data: content,
-      length: content?.length,
-      section: item.order,
-    };
-
-    return section as Partial<ISection>;
+export class TocSectionService {
+  async processTocFile(tocObj: any) {
+    const segments: Array<Segment> = this.drillXml(tocObj);
+    const tableOfContents = this.formatSegments(segments);
+    return this.drillXml(tocObj) as TableOfContents;
   }
 
   private drillXml(node: any) {
     if (isArray(node)) {
       let nodes = node.map((n) => this.drillXml(n));
       nodes = nodes.filter((n) => n);
-      nodes = nodes.filter((n) => n.text !== '');
+      // nodes = nodes.filter((n) => n.text !== '');
       nodes = nodes.flat();
 
       return nodes;
     }
 
     // Unique Elements
-    if (node?.text && node?.contentType) return node;
     if (node?.text) return this.processText(node.text);
 
     // Higher Level XML Components
@@ -50,53 +38,51 @@ export class SectionService {
     if (node?.div) return this.drillXml(node.div);
 
     // Content Blocks
-    if (node?.p) return this.handleContentBlock(node, 'p');
-    if (node?.title) return this.handleContentBlock(node, 'title');
-    if (node?.blockquote) return this.handleContentBlock(node, 'blockquote');
-    if (node?.h1) return this.handleContentBlock(node, 'h1');
-    if (node?.h2) return this.handleContentBlock(node, 'h2');
-    if (node?.h3) return this.handleContentBlock(node, 'h3');
-    if (node?.h4) return this.handleContentBlock(node, 'h4');
-    if (node?.h5) return this.handleContentBlock(node, 'h5');
-    if (node?.h6) return this.handleContentBlock(node, 'h6');
+    if (node?.p) return this.handleSegmentBlock(node, 'p');
+    if (node?.a) return this.handleHrefNode(node);
+
+    if (node?.title) return this.handleSegmentBlock(node, 'title');
+    if (node?.h1) return this.handleSegmentBlock(node, 'h1');
+    if (node?.h2) return this.handleSegmentBlock(node, 'h2');
+    if (node?.h3) return this.handleSegmentBlock(node, 'h3');
+    if (node?.h4) return this.handleSegmentBlock(node, 'h4');
+    if (node?.h5) return this.handleSegmentBlock(node, 'h5');
+    if (node?.h6) return this.handleSegmentBlock(node, 'h6');
+    if (node?.blockquote) return this.handleSegmentBlock(node, 'blockquote');
 
     // Text Modifiers
     if (node?.span) return this.handleTextModifier(node, 'span');
     if (node?.i) return this.handleTextModifier(node, 'i');
     if (node?.q) return this.handleTextModifier(node, 'q');
-    if (node?.a) return this.handleTextModifier(node, 'a');
     if (node?.strong) return this.handleTextModifier(node, 'strong');
     if (node?.br) return this.handleTextModifier(node, 'br');
     if (node?.small) return this.handleTextModifier(node, 'small');
   }
 
-  private handleContentBlock(node, contentType: ContentBlock) {
+  private handleHrefNode(node) {
+    const a = node.a[0];
+    const text = this.drillXml(a);
+
+    const href = this.handleMetadata(node).href;
+    const { href_path, href_id } = splitFileHref(href);
+
+    const segment: Partial<Segment> = {
+      title: text,
+      section_reference_id: href_path,
+      subsection_reference_id: href_id,
+    };
+
+    return segment;
+  }
+
+  private handleSegmentBlock(node, contentType: ContentBlock) {
     const child = node[contentType];
     const response = this.drillXml(child);
-    const metadata = this.handleMetadata(node);
 
     if (!response) return;
+    if (this.isStringArray(response)) return { title: response.join(' ') };
 
-    if (this.isStringArray(response)) {
-      return {
-        text: response.join(' '),
-        content_type: contentType,
-        metadata: metadata,
-      };
-    }
-
-    if (response[1]) {
-      console.log('NODES:', node);
-      throw new InternalServerErrorException(
-        'FUCK!',
-        'multiple content nodes are possible.',
-      );
-    }
-
-    response[0].metadata = metadata;
-    response[0].metadata.content_types ||= [];
-    response[0].metadata.content_types.push(contentType);
-    return response[0];
+    return response[0] as Partial<Segment>;
   }
 
   private handleTextModifier(node, modifier?: TextModifier) {
@@ -104,18 +90,10 @@ export class SectionService {
     const nodes = this.drillXml(child);
     const rawText = this.joinNodes(nodes);
 
-    const text = this.handleModifierSpacing(rawText, modifier);
-
-    return text;
-
-    // TODO - IMPORANT!!!
-    // return {
-    //   text,
-    //   metadata: this.handleMetadata(node),
-    // };
+    return this.handleModifierSpacing(rawText, modifier);
   }
 
-  private joinNodes(nodes: Array<any>) {
+  private joinNodes(nodes: Array<string>) {
     return nodes.join(' ').toString();
   }
 
@@ -130,12 +108,12 @@ export class SectionService {
     return processedText;
   }
 
-  private formatNodes(nodes: Array<any>): any {
+  private formatSegments(nodes: Array<any>): any {
     if (this.isStringArray(nodes)) return nodes;
 
     return nodes.map((node, index) => {
       node.sequence = index;
-      node.text = node.text.replace(/\s\s+/g, ' ').trim(); // remove additional spaces
+      node.title = node.title.replace(/\s\s+/g, ' ').trim(); // remove additional spaces
       return node;
     });
   }
@@ -163,8 +141,8 @@ export class SectionService {
 
   private handleMetadata(node: any) {
     const raw: NodeMetadata = node[':@'];
-
     const metadata: ContentMetadata = {};
+
     if (raw?.id) metadata.ref_id = raw.id;
     if (raw?.href) metadata.href = raw.href;
 

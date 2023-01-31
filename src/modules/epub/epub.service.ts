@@ -10,10 +10,17 @@ import { Metadata } from '../../types/metadata.types';
 import { OpfService } from '../opf/services/opf.service';
 import { TocHref } from '../../types/tableOfContents.types';
 import { TocNcxService } from '../toc/services/tocNcx.service';
+import { splitFileHref } from '../../helpers/splitFileHref';
+import { SectionService } from '../../services/section.service';
+import { TocSectionService } from '../toc/services/tocSection.service';
 
 @Injectable()
 export class EpubService {
-  constructor(private opf: OpfService, private tocNcxService: TocNcxService) {}
+  constructor(
+    private opf: OpfService,
+    private tocNcxService: TocNcxService,
+    private tocSectionService: TocSectionService,
+  ) {}
 
   async stream(book_id: string) {
     const path = getRootPath(book_id);
@@ -53,21 +60,14 @@ export class EpubService {
   }
 
   async createTableOfContents(epub: any, tocHrefs: Array<TocHref>) {
-    console.log('TOC HREFS:', tocHrefs);
-    const ncxHref = tocHrefs.find((item) => item.href.includes('toc.ncx')).href;
-
-    if (!ncxHref)
-      throw new InternalServerErrorException(
-        'EPUB does not contain toc.ncx declaration',
-      );
-
-    const tocBuffer = epub.entryData(ncxHref);
+    const { href, type } = this.handleHref(tocHrefs);
+    const tocBuffer = await epub.entryData(href);
     const tocXml = tocBuffer.toString();
     const tocObject = await processXml(tocXml, { preserveOrder: true });
 
-    console.log('TOC OBJECT:', tocObject);
-
-    return this.tocNcxService.processTocNcx(tocObject);
+    if (type === 'ncx') return this.tocNcxService.processTocNcx(tocObject);
+    if (type === 'section')
+      return this.tocSectionService.processTocFile(tocObject);
   }
 
   formatEntries(entries: any) {
@@ -87,5 +87,27 @@ export class EpubService {
       if (!!next) orderedText.push(next);
     }
     return orderedText as Array<ManifestItem>;
+  }
+
+  // PRIVATE INTERFACE
+
+  private handleHref(tocHrefs: Array<TocHref>) {
+    // TODO - TOC Decision Tree
+    const item = tocHrefs.find((item) => item.type === 'section');
+
+    if (!item)
+      throw new InternalServerErrorException(
+        'EPUB does not contain a valid type declaration',
+        tocHrefs.toString(),
+      );
+
+    if (item.href.includes('#')) {
+      const { href_path } = splitFileHref(item.href);
+      return { href: href_path, type: item.type };
+    }
+
+    // TODO - read epub entry data and sync
+
+    return item;
   }
 }

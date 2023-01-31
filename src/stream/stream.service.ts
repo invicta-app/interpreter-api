@@ -23,6 +23,7 @@ export class StreamService {
 
     const tableOfContents = this.epub.createTableOfContents(epub, tocHrefs);
     const orderedManifest = this.epub.orderManifestItems(manifest.text, spine);
+
     const sections: Array<Partial<ISection>> = [];
 
     for await (const item of orderedManifest) {
@@ -42,6 +43,7 @@ export class StreamService {
       ordered_manifest: orderedManifest,
       spine,
       volume: sections,
+      table_of_contents: tableOfContents,
     };
   }
 

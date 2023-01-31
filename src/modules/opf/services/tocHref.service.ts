@@ -27,7 +27,7 @@ export class TocHrefService {
   private getGuideTocHref(guide: OpfGuide) {
     if (Array.isArray(guide.reference)) {
       const tocHref = guide.reference.find((item) => item.type === 'toc');
-      if (tocHref) return { type: 'ncx', href: tocHref.href } as TocHref;
+      if (tocHref) return { type: 'section', href: tocHref.href } as TocHref;
       else return;
     }
     // TODO - guide TOC type = 'text'

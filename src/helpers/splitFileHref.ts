@@ -1,4 +1,4 @@
-export const splitHtmlHref = (href: string) => {
+export const splitFileHref = (href: string) => {
   if (typeof href !== 'string' || !href) return {};
   const hash = href.lastIndexOf('#');
   const href_id = href.slice(hash);
