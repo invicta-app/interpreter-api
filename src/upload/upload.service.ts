@@ -1,21 +1,13 @@
-import {
-  BadRequestException,
-  Injectable,
-  InternalServerErrorException,
-} from '@nestjs/common';
+import { Injectable, InternalServerErrorException } from '@nestjs/common';
 import { SectionService } from '../modules/epub/services/section.service';
 import { ISection } from '../types/section.interface';
-import { SectionDto } from '../dto/section.dto';
 import { EpubService } from '../modules/epub/epub.service';
 import axios from 'axios';
 import { Metadata } from '../types/metadata.types';
 
 @Injectable()
 export class UploadService {
-  constructor(
-    private epub: EpubService,
-    private sectionService: SectionService,
-  ) {}
+  constructor(private epub: EpubService) {}
 
   async uploadVolume(volume_id: string, opts?: { revise_title?: string }) {
     const epub = await this.epub.stream(volume_id);

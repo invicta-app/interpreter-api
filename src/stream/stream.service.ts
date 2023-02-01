@@ -1,5 +1,4 @@
 import { BadRequestException, Injectable } from '@nestjs/common';
-import { OpfService } from '../modules/opf/services/opf.service';
 import { SectionService } from '../modules/epub/services/section.service';
 import { ISection } from '../types/section.interface';
 import { SectionDto } from '../dto/section.dto';
@@ -9,7 +8,6 @@ import { processXml } from '../helpers/xml-processor';
 @Injectable()
 export class StreamService {
   constructor(
-    private opf: OpfService,
     private epub: EpubService,
     private sectionService: SectionService,
   ) {}
