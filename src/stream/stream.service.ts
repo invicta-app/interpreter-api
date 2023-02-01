@@ -25,16 +25,19 @@ export class StreamService {
       tocHrefs,
     );
     const orderedManifest = this.epub.orderManifestItems(manifest.text, spine);
-
-    const sections: Array<Partial<ISection>> = [];
+    const partialSections: Array<Partial<ISection>> = [];
 
     for await (const item of orderedManifest) {
       item.href = entries.find((entry) => entry.endsWith(item.href)); // TODO - necessary?
       const section = await this.epub.createSection(epub, item);
-      sections.push(section);
+      partialSections.push(section);
     }
 
-    metadata.content_count = this.getContentCount(sections);
+    metadata.content_count = this.getContentCount(partialSections);
+    const sections = this.epub.appendTitleToSections(
+      partialSections,
+      tableOfContents,
+    );
 
     return {
       metadata,

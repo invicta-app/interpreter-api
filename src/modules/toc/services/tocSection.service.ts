@@ -14,7 +14,7 @@ import { ParserService } from '../../parser/parser.service';
 export class TocSectionService {
   constructor(private parser: ParserService) {}
 
-  async processTocFile(tocObj: any) {
+  processTocFile(tocObj: any) {
     const segments: Array<Segment> = this.drillXml(tocObj);
 
     return this.formatSegments(segments) as TableOfContents;
@@ -69,8 +69,8 @@ export class TocSectionService {
 
     const segment: Partial<Segment> = {
       title: text,
-      section_reference_id: href_path,
-      subsection_reference_id: href_id,
+      href: href_path,
+      reference_id: href_id,
     };
 
     return segment;
@@ -97,17 +97,6 @@ export class TocSectionService {
 
   private joinNodes(nodes: Array<string>) {
     return nodes.join(' ').toString();
-  }
-
-  private processText(text: string): string {
-    let processedText = text;
-
-    if (typeof text === 'number') processedText = processedText.toString();
-
-    processedText = processedText.replace('&nbsp;', ' ');
-    processedText = processedText.replace('&#160;', ' ');
-
-    return processedText;
   }
 
   private formatSegments(nodes: Array<any>): any {

@@ -2,8 +2,8 @@ export type TableOfContents = Array<Segment>;
 
 export type Segment = {
   title: string;
-  section_reference_id: string;
-  subsection_reference_id?: string;
+  href: string;
+  reference_id?: string;
   metadata: any;
   sequence: number;
 };

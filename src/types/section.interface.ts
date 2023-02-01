@@ -4,4 +4,5 @@ export interface ISection {
   data: any;
   length: number;
   section: number;
+  href: string;
 }

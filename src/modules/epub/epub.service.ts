@@ -8,7 +8,7 @@ import { getOpfFilePath } from '../../helpers/getOpfFilePath';
 import { OpfObject } from '../../types/opf.type';
 import { Metadata } from '../../types/metadata.types';
 import { OpfService } from '../opf/services/opf.service';
-import { TocHref } from '../../types/tableOfContents.types';
+import { TableOfContents, TocHref } from '../../types/tableOfContents.types';
 import { TocNcxService } from '../toc/services/tocNcx.service';
 import { splitFileHref } from '../../helpers/splitFileHref';
 import { SectionService } from './services/section.service';
@@ -69,6 +69,7 @@ export class EpubService {
     const section = this.sectionService.processSectionFile(xml);
     section.ref_id = item.id;
     section.section = item.order;
+    section.href = item.href;
 
     return section as ISection;
   }
@@ -79,9 +80,10 @@ export class EpubService {
     const fileAsString = fileBuffer.toString();
     const tocXml = await processXml(fileAsString, { preserveOrder: true });
 
-    if (type === 'ncx') return this.tocNcxService.processTocNcx(tocXml);
     if (type === 'section')
       return this.tocSectionService.processTocFile(tocXml);
+    // if (type === 'ncx')
+    //   return this.tocNcxService.processTocNcx(tocXml);
   }
 
   formatEntries(entries: any) {
@@ -101,6 +103,25 @@ export class EpubService {
       if (!!next) orderedText.push(next);
     }
     return orderedText as Array<ManifestItem>;
+  }
+
+  appendTitleToSections(
+    partialSections: Array<Partial<ISection>>,
+    toc: TableOfContents,
+  ) {
+    const sections: Array<ISection> = [];
+
+    console.log('HERE:', toc);
+
+    for (const section of partialSections) {
+      const segment = toc.find((segment) => segment.href === section.href);
+      if (!segment) continue;
+
+      section.title = segment.title;
+      sections.push(section as ISection);
+    }
+
+    return sections;
   }
 
   // PRIVATE INTERFACE

@@ -3,6 +3,7 @@ import { ISection } from '../types/section.interface';
 import { EpubService } from '../modules/epub/epub.service';
 import axios from 'axios';
 import { Metadata } from '../types/metadata.types';
+import { TableOfContents } from '../types/tableOfContents.types';
 
 @Injectable()
 export class UploadService {
@@ -11,23 +12,33 @@ export class UploadService {
   async uploadVolume(volume_id: string, opts?: { revise_title?: string }) {
     const epub = await this.epub.stream(volume_id);
 
+    // Create Epub Data
     const entries = this.epub.formatEntries(await epub.entries());
     const { metadata, manifest, spine, tocHrefs } = await this.epub.process(
       epub,
     );
+    const tableOfContents = await this.epub.createTableOfContents(
+      epub,
+      tocHrefs,
+    );
 
-    const tableOfContents = this.epub.createTableOfContents(epub, tocHrefs);
+    // Further Post-Processing
     const orderedManifest = this.epub.orderManifestItems(manifest.text, spine);
-    const sections: Array<Partial<ISection>> = [];
+    const partialSections: Array<Partial<ISection>> = [];
 
     for await (const item of orderedManifest) {
       item.href = entries.find((entry) => entry.endsWith(item.href)); // TODO - necessary?
       const section = await this.epub.createSection(epub, item);
-      sections.push(section);
+      partialSections.push(section);
     }
 
+    // Misc Post-Processing
     if (opts.revise_title) metadata.title = opts.revise_title;
-    metadata.content_count = this.getContentCount(sections);
+    metadata.content_count = this.getContentCount(partialSections);
+    const sections = this.epub.appendTitleToSections(
+      partialSections,
+      tableOfContents,
+    );
 
     const body = {
       volume: sections,
