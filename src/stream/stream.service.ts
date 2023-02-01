@@ -20,24 +20,24 @@ export class StreamService {
       epub,
     );
 
-    const tableOfContents = this.epub.createTableOfContents(epub, tocHrefs);
+    const tableOfContents = await this.epub.createTableOfContents(
+      epub,
+      tocHrefs,
+    );
     const orderedManifest = this.epub.orderManifestItems(manifest.text, spine);
 
     const sections: Array<Partial<ISection>> = [];
 
     for await (const item of orderedManifest) {
       item.href = entries.find((entry) => entry.endsWith(item.href)); // TODO - necessary?
-      this.epub
-        .createSection(epub, item)
-        .then((section) => sections.push(section)); // TODO - missing titles from TOC
+      const section = await this.epub.createSection(epub, item);
+      sections.push(section);
     }
 
     metadata.content_count = this.getContentCount(sections);
 
     return {
       metadata,
-      ordered_manifest: orderedManifest,
-      spine,
       volume: sections,
       table_of_contents: tableOfContents,
     };

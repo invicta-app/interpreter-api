@@ -22,9 +22,8 @@ export class UploadService {
 
     for await (const item of orderedManifest) {
       item.href = entries.find((entry) => entry.endsWith(item.href)); // TODO - necessary?
-      this.epub
-        .createSection(epub, item)
-        .then((section) => sections.push(section)); // TODO - missing titles from TOC
+      const section = await this.epub.createSection(epub, item);
+      sections.push(section);
     }
 
     if (opts.revise_title) metadata.title = opts.revise_title;
