@@ -11,8 +11,9 @@ import { OpfService } from '../opf/services/opf.service';
 import { TocHref } from '../../types/tableOfContents.types';
 import { TocNcxService } from '../toc/services/tocNcx.service';
 import { splitFileHref } from '../../helpers/splitFileHref';
-import { SectionService } from '../../services/section.service';
+import { SectionService } from './services/section.service';
 import { TocSectionService } from '../toc/services/tocSection.service';
+import { ISection } from '../../types/section.interface';
 
 @Injectable()
 export class EpubService {
@@ -20,6 +21,7 @@ export class EpubService {
     private opf: OpfService,
     private tocNcxService: TocNcxService,
     private tocSectionService: TocSectionService,
+    private sectionService: SectionService,
   ) {}
 
   async stream(book_id: string) {
@@ -59,15 +61,27 @@ export class EpubService {
     return { metadata, manifest, spine, tocHrefs };
   }
 
+  async createSection(epub: any, item: ManifestItem) {
+    const fileBuffer = await epub.entryData(item.href);
+    const fileAsString = fileBuffer.toString();
+    const xml = await processXml(fileAsString, { preserveOrder: true });
+
+    const section = this.sectionService.processSectionFile(xml);
+    section.ref_id = item.id;
+    section.section = item.order;
+
+    return section as ISection;
+  }
+
   async createTableOfContents(epub: any, tocHrefs: Array<TocHref>) {
     const { href, type } = this.handleHref(tocHrefs);
-    const tocBuffer = await epub.entryData(href);
-    const tocXml = tocBuffer.toString();
-    const tocObject = await processXml(tocXml, { preserveOrder: true });
+    const fileBuffer = await epub.entryData(href);
+    const fileAsString = fileBuffer.toString();
+    const tocXml = await processXml(fileAsString, { preserveOrder: true });
 
-    if (type === 'ncx') return this.tocNcxService.processTocNcx(tocObject);
+    if (type === 'ncx') return this.tocNcxService.processTocNcx(tocXml);
     if (type === 'section')
-      return this.tocSectionService.processTocFile(tocObject);
+      return this.tocSectionService.processTocFile(tocXml);
   }
 
   formatEntries(entries: any) {

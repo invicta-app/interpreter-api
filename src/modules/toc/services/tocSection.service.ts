@@ -8,27 +8,28 @@ import {
   TextModifier,
 } from '../../../types/content.types';
 import { splitFileHref } from '../../../helpers/splitFileHref';
+import { ParserService } from '../../parser/parser.service';
 
 @Injectable()
 export class TocSectionService {
+  constructor(private parser: ParserService) {}
+
   async processTocFile(tocObj: any) {
     const segments: Array<Segment> = this.drillXml(tocObj);
-    const tableOfContents = this.formatSegments(segments);
-    return this.drillXml(tocObj) as TableOfContents;
+
+    return this.formatSegments(segments) as TableOfContents;
   }
 
   private drillXml(node: any) {
     if (isArray(node)) {
       let nodes = node.map((n) => this.drillXml(n));
       nodes = nodes.filter((n) => n);
-      // nodes = nodes.filter((n) => n.text !== '');
       nodes = nodes.flat();
-
       return nodes;
     }
 
     // Unique Elements
-    if (node?.text) return this.processText(node.text);
+    if (node?.text) return this.parser.processText(node.text);
 
     // Higher Level XML Components
     if (node?.html) return this.drillXml(node.html);
@@ -63,7 +64,7 @@ export class TocSectionService {
     const a = node.a[0];
     const text = this.drillXml(a);
 
-    const href = this.handleMetadata(node).href;
+    const href = this.parser.handleMetadata(node).href;
     const { href_path, href_id } = splitFileHref(href);
 
     const segment: Partial<Segment> = {
@@ -80,7 +81,8 @@ export class TocSectionService {
     const response = this.drillXml(child);
 
     if (!response) return;
-    if (this.isStringArray(response)) return { title: response.join(' ') };
+    if (this.parser.isStringArray(response))
+      return { title: response.join(' ') };
 
     return response[0] as Partial<Segment>;
   }
@@ -90,7 +92,7 @@ export class TocSectionService {
     const nodes = this.drillXml(child);
     const rawText = this.joinNodes(nodes);
 
-    return this.handleModifierSpacing(rawText, modifier);
+    return this.parser.handleModifierSpacing(rawText, modifier);
   }
 
   private joinNodes(nodes: Array<string>) {
@@ -109,43 +111,12 @@ export class TocSectionService {
   }
 
   private formatSegments(nodes: Array<any>): any {
-    if (this.isStringArray(nodes)) return nodes;
+    if (this.parser.isStringArray(nodes)) return nodes;
 
     return nodes.map((node, index) => {
       node.sequence = index;
       node.title = node.title.replace(/\s\s+/g, ' ').trim(); // remove additional spaces
       return node;
     });
-  }
-
-  private handleModifierSpacing(text: string, modifier: TextModifier): string {
-    const [before, after] = ['', ''];
-
-    if (modifier === 'span') return `${before}${text}${after}`;
-    if (modifier === 'i') return `${before}*${text}*${after}`;
-    if (modifier === 'emphasize') return `${before}**${text}**${after}`;
-    if (modifier === 'strong') return `${before}**${text}**${after}`;
-    if (modifier === 'q') return `${before}**${text}**${after}`;
-    if (modifier === 'a') return `${before}${text}${after}`; // TODO
-    if (modifier === 'br') return `\n`; // TODO
-    if (modifier === 'small') return `${before}${text}${after}`;
-
-    throw new InternalServerErrorException(
-      `Unidentified text modifier: ${modifier}`,
-    );
-  }
-
-  private isStringArray(nodes: any) {
-    return nodes.every((node) => typeof node === 'string');
-  }
-
-  private handleMetadata(node: any) {
-    const raw: NodeMetadata = node[':@'];
-    const metadata: ContentMetadata = {};
-
-    if (raw?.id) metadata.ref_id = raw.id;
-    if (raw?.href) metadata.href = raw.href;
-
-    return metadata;
   }
 }

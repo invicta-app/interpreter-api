@@ -3,7 +3,7 @@ import { UploadController } from './upload.controller';
 import { UploadService } from './upload.service';
 import { EpubModule } from '../modules/epub/epub.module';
 import { OpfModule } from '../modules/opf/opf.module';
-import { SectionService } from '../services/section.service';
+import { SectionService } from '../modules/epub/services/section.service';
 
 @Module({
   imports: [EpubModule, OpfModule],

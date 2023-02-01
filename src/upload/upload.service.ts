@@ -3,7 +3,7 @@ import {
   Injectable,
   InternalServerErrorException,
 } from '@nestjs/common';
-import { SectionService } from '../services/section.service';
+import { SectionService } from '../modules/epub/services/section.service';
 import { ISection } from '../types/section.interface';
 import { SectionDto } from '../dto/section.dto';
 import { EpubService } from '../modules/epub/epub.service';
@@ -30,18 +30,20 @@ export class UploadService {
     const sections: Array<Partial<ISection>> = [];
 
     for await (const item of orderedManifest) {
-      const entry = entries.find((entry) => entry.endsWith(item.href));
-      const fileBuffer = await epub.entryData(entry);
-      const fileAsString = fileBuffer.toString();
-
-      this.sectionService
-        .createSection(item, fileAsString)
-        .then((section) => sections.push(section));
+      item.href = entries.find((entry) => entry.endsWith(item.href)); // TODO - necessary?
+      this.epub
+        .createSection(epub, item)
+        .then((section) => sections.push(section)); // TODO - missing titles from TOC
     }
 
     if (opts.revise_title) metadata.title = opts.revise_title;
     metadata.content_count = this.getContentCount(sections);
-    const body = { volume: sections, metadata: this.handleMetadata(metadata) };
+
+    const body = {
+      volume: sections,
+      metadata: this.handleMetadata(metadata),
+      table_of_contents: tableOfContents,
+    };
 
     try {
       const url = process.env.INVICTA_API + '/api/v1/books';
@@ -55,34 +57,9 @@ export class UploadService {
     }
   }
 
-  async updateSection(sectionDto: SectionDto) {
-    const { volume_id, section_number } = sectionDto;
-    const epub = await this.epub.stream(volume_id);
-    const entries = this.epub.formatEntries(await epub.entries());
+  // Private Interface
 
-    const { manifest, spine } = await this.epub.process(epub);
-
-    const orderedManifest = this.epub.orderManifestItems(manifest.text, spine);
-
-    const section = orderedManifest.find(
-      (item) => item.order == section_number,
-    );
-
-    if (!section)
-      throw new BadRequestException(
-        `Section ${section_number} not found in the requested resource.`,
-      );
-
-    const entry = entries.find((entry) => entry.endsWith(section.href));
-    const fileBuffer = await epub.entryData(entry);
-    const fileAsString = fileBuffer.toString();
-
-    return this.sectionService.createSection(section, fileAsString);
-  }
-
-  async overwriteVolume(volume_id: string) {}
-
-  handleMetadata(metadata: Metadata) {
+  private handleMetadata(metadata: Metadata) {
     if (!metadata.subjects) metadata.subjects = [];
     if (!metadata.author) metadata.author = 'Unknown';
     if (!metadata.description) metadata.description = '';

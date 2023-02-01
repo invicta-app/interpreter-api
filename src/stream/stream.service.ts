@@ -1,9 +1,10 @@
 import { BadRequestException, Injectable } from '@nestjs/common';
 import { OpfService } from '../modules/opf/services/opf.service';
-import { SectionService } from '../services/section.service';
+import { SectionService } from '../modules/epub/services/section.service';
 import { ISection } from '../types/section.interface';
 import { SectionDto } from '../dto/section.dto';
 import { EpubService } from '../modules/epub/epub.service';
+import { processXml } from '../helpers/xml-processor';
 
 @Injectable()
 export class StreamService {
@@ -27,13 +28,10 @@ export class StreamService {
     const sections: Array<Partial<ISection>> = [];
 
     for await (const item of orderedManifest) {
-      const entry = entries.find((entry) => entry.endsWith(item.href));
-      const fileBuffer = await epub.entryData(entry);
-      const fileAsString = fileBuffer.toString();
-
-      this.sectionService
-        .createSection(item, fileAsString)
-        .then((section) => sections.push(section));
+      item.href = entries.find((entry) => entry.endsWith(item.href)); // TODO - necessary?
+      this.epub
+        .createSection(epub, item)
+        .then((section) => sections.push(section)); // TODO - missing titles from TOC
     }
 
     metadata.content_count = this.getContentCount(sections);
@@ -68,8 +66,9 @@ export class StreamService {
     const entry = entries.find((entry) => entry.endsWith(section.href));
     const fileBuffer = await epub.entryData(entry);
     const fileAsString = fileBuffer.toString();
+    const xml = processXml(fileAsString, { preserveOrder: true });
 
-    return this.sectionService.createSection(section, fileAsString);
+    return this.sectionService.processSectionFile(xml);
   }
 
   private getContentCount(sections: Array<Partial<ISection>>) {

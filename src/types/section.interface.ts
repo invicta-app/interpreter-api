@@ -4,6 +4,4 @@ export interface ISection {
   data: any;
   length: number;
   section: number;
-  parent_title: string;
-  parent_id: string;
 }

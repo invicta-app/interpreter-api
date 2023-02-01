@@ -1,28 +1,27 @@
 import { Injectable, InternalServerErrorException } from '@nestjs/common';
-import { ManifestItem } from '../types/manifest.types';
-import { ISection } from '../types/section.interface';
-import { processXml } from '../helpers/xml-processor';
-import { isArray } from '../helpers/validatePrimitives';
+import { ManifestItem } from '../../../types/manifest.types';
+import { ISection } from '../../../types/section.interface';
+import { processXml } from '../../../helpers/xml-processor';
+import { isArray } from '../../../helpers/validatePrimitives';
 import {
   ContentBlock,
   ContentMetadata,
   NodeMetadata,
   TextModifier,
-} from '../types/content.types';
+} from '../../../types/content.types';
+import { ParserService } from '../../parser/parser.service';
 
 @Injectable()
 export class SectionService {
-  async createSection(item: ManifestItem, fileAsString: string) {
-    const xml = await processXml(fileAsString, { preserveOrder: true });
+  constructor(private parser: ParserService) {}
 
-    const nodes = await this.drillXml(xml);
+  processSectionFile(xml: any) {
+    const nodes = this.drillXml(xml);
     const content = this.formatNodes(nodes);
 
     const section: Partial<ISection> = {
-      ref_id: item.id,
       data: content,
       length: content?.length,
-      section: item.order,
     };
 
     return section as Partial<ISection>;
@@ -40,7 +39,7 @@ export class SectionService {
 
     // Unique Elements
     if (node?.text && node?.contentType) return node;
-    if (node?.text) return this.processText(node.text);
+    if (node?.text) return this.parser.processText(node.text);
 
     // Higher Level XML Components
     if (node?.html) return this.drillXml(node.html);
@@ -73,11 +72,11 @@ export class SectionService {
   private handleContentBlock(node, contentType: ContentBlock) {
     const child = node[contentType];
     const response = this.drillXml(child);
-    const metadata = this.handleMetadata(node);
+    const metadata = this.parser.handleMetadata(node);
 
     if (!response) return;
 
-    if (this.isStringArray(response)) {
+    if (this.parser.isStringArray(response)) {
       return {
         text: response.join(' '),
         content_type: contentType,
@@ -104,9 +103,7 @@ export class SectionService {
     const nodes = this.drillXml(child);
     const rawText = this.joinNodes(nodes);
 
-    const text = this.handleModifierSpacing(rawText, modifier);
-
-    return text;
+    return this.parser.handleModifierSpacing(rawText, modifier);
 
     // TODO - IMPORANT!!!
     // return {
@@ -115,59 +112,17 @@ export class SectionService {
     // };
   }
 
-  private joinNodes(nodes: Array<any>) {
+  private joinNodes(nodes: Array<string>) {
     return nodes.join(' ').toString();
   }
 
-  private processText(text: string): string {
-    let processedText = text;
-
-    if (typeof text === 'number') processedText = processedText.toString();
-
-    processedText = processedText.replace('&nbsp;', ' ');
-    processedText = processedText.replace('&#160;', ' ');
-
-    return processedText;
-  }
-
   private formatNodes(nodes: Array<any>): any {
-    if (this.isStringArray(nodes)) return nodes;
+    if (this.parser.isStringArray(nodes)) return nodes;
 
     return nodes.map((node, index) => {
       node.sequence = index;
       node.text = node.text.replace(/\s\s+/g, ' ').trim(); // remove additional spaces
       return node;
     });
-  }
-
-  private handleModifierSpacing(text: string, modifier: TextModifier): string {
-    const [before, after] = ['', ''];
-
-    if (modifier === 'span') return `${before}${text}${after}`;
-    if (modifier === 'i') return `${before}*${text}*${after}`;
-    if (modifier === 'emphasize') return `${before}**${text}**${after}`;
-    if (modifier === 'strong') return `${before}**${text}**${after}`;
-    if (modifier === 'q') return `${before}**${text}**${after}`;
-    if (modifier === 'a') return `${before}${text}${after}`; // TODO
-    if (modifier === 'br') return `\n`; // TODO
-    if (modifier === 'small') return `${before}${text}${after}`;
-
-    throw new InternalServerErrorException(
-      `Unidentified text modifier: ${modifier}`,
-    );
-  }
-
-  private isStringArray(nodes: any) {
-    return nodes.every((node) => typeof node === 'string');
-  }
-
-  private handleMetadata(node: any) {
-    const raw: NodeMetadata = node[':@'];
-
-    const metadata: ContentMetadata = {};
-    if (raw?.id) metadata.ref_id = raw.id;
-    if (raw?.href) metadata.href = raw.href;
-
-    return metadata;
   }
 }
