@@ -1,14 +1,7 @@
 import { Injectable, InternalServerErrorException } from '@nestjs/common';
-import { ManifestItem } from '../../../types/manifest.types';
 import { ISection } from '../../../types/section.interface';
-import { processXml } from '../../../helpers/xml-processor';
 import { isArray } from '../../../helpers/validatePrimitives';
-import {
-  ContentBlock,
-  ContentMetadata,
-  NodeMetadata,
-  TextModifier,
-} from '../../../types/content.types';
+import { ContentBlock, TextModifier } from '../../../types/content.types';
 import { ParserService } from '../../parser/parser.service';
 
 @Injectable()
