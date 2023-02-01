@@ -1,5 +1,4 @@
 import { Injectable, InternalServerErrorException } from '@nestjs/common';
-import { SectionService } from '../modules/epub/services/section.service';
 import { ISection } from '../types/section.interface';
 import { EpubService } from '../modules/epub/epub.service';
 import axios from 'axios';

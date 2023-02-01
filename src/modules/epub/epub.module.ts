@@ -9,6 +9,6 @@ import { ParserModule } from '../parser/parser.module';
 @Module({
   imports: [OpfModule, TocModule, ParserModule],
   providers: [EpubService, ParserService, SectionService],
-  exports: [EpubService],
+  exports: [EpubService, ParserModule],
 })
 export class EpubModule {}
