@@ -15,15 +15,14 @@ export class TocSectionService {
   constructor(private parser: ParserService) {}
 
   processTocFile(tocObj: any) {
-    const segments: Array<Segment> = this.drillXml(tocObj);
-
+    let segments: Array<Segment> = this.drillXml(tocObj);
+    segments = this.cleanSegments(segments);
     return this.formatSegments(segments) as TableOfContents;
   }
 
   private drillXml(node: any) {
     if (isArray(node)) {
       let nodes = node.map((n) => this.drillXml(n));
-      nodes = nodes.filter((n) => n);
       nodes = nodes.flat();
       return nodes;
     }
@@ -99,9 +98,11 @@ export class TocSectionService {
     return nodes.join(' ').toString();
   }
 
-  private formatSegments(nodes: Array<any>): any {
-    if (this.parser.isStringArray(nodes)) return nodes;
+  private cleanSegments(nodes: Array<any>): any {
+    return nodes.filter((n) => n?.title || n?.href);
+  }
 
+  private formatSegments(nodes: Array<any>): any {
     return nodes.map((node, index) => {
       node.sequence = index;
       node.title = node.title.replace(/\s\s+/g, ' ').trim(); // remove additional spaces

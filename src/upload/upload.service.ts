@@ -72,7 +72,7 @@ export class UploadService {
 
   private getContentCount(sections: Array<Partial<ISection>>) {
     let contentCount = 0;
-    sections.forEach((section) => (contentCount += section.data.length));
+    sections.forEach((section) => (contentCount += section.content.length));
     return contentCount;
   }
 }

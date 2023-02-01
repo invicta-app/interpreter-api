@@ -111,8 +111,6 @@ export class EpubService {
   ) {
     const sections: Array<ISection> = [];
 
-    console.log('HERE:', toc);
-
     for (const section of partialSections) {
       const segment = toc.find((segment) => segment.href === section.href);
       if (!segment) continue;

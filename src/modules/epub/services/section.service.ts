@@ -13,7 +13,7 @@ export class SectionService {
     const content = this.formatNodes(nodes);
 
     const section: Partial<ISection> = {
-      data: content,
+      content: content,
       length: content?.length,
     };
 

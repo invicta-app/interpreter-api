@@ -1,7 +1,7 @@
 export interface ISection {
   ref_id: string;
   title: string;
-  data: any;
+  content: any;
   length: number;
   section: number;
   href: string;
