@@ -109,14 +109,19 @@ export class EpubService {
     partialSections: Array<Partial<ISection>>,
     toc: TableOfContents,
   ) {
+    // TODO - not showing directory in Table of Contents
     const sections: Array<ISection> = [];
 
     for (const section of partialSections) {
       const segment = toc.find((segment) => segment.href === section.href);
-      if (!segment) continue;
 
-      section.title = segment.title;
-      sections.push(section as ISection);
+      if (segment) {
+        section.title = segment.title;
+        sections.push(section as ISection);
+      } else {
+        section.title = '';
+        sections.push(section as ISection);
+      }
     }
 
     return sections;
