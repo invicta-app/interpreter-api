@@ -2,7 +2,7 @@ export const GenericXMLTypes = ['html', 'body', 'section', 'title'];
 
 export const TextTypes = ['span', 'p', 'i', 'q', 'blockquote'];
 
-export const HeaderTypes = ['h1', 'h2', 'h3', 'h4', 'h5', 'h6'];
+export const HeaderTypes = ['h1', 'h2', 'h3', 'h4', 'h5', 'h6', 'title'];
 
 export const ArrayNodes = GenericXMLTypes.concat(HeaderTypes).concat(TextTypes);
 

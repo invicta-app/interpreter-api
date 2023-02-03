@@ -1,7 +1,11 @@
 import { Injectable, InternalServerErrorException } from '@nestjs/common';
 import { ISection } from '../../../types/section.interface';
 import { isArray } from '../../../helpers/validatePrimitives';
-import { ContentBlock, TextModifier } from '../../../types/content.types';
+import {
+  ContentBlock,
+  IContent,
+  TextModifier,
+} from '../../../types/content.types';
 import { ParserService } from '../../parser/parser.service';
 
 @Injectable()
@@ -9,12 +13,13 @@ export class SectionService {
   constructor(private parser: ParserService) {}
 
   processSectionFile(xml: any) {
-    const nodes = this.drillXml(xml);
-    const content = this.formatNodes(nodes);
+    let nodes = this.drillXml(xml);
+    nodes = this.squashNodes(nodes);
+    nodes = this.formatNodes(nodes);
 
     const section: Partial<ISection> = {
-      content: content,
-      length: content?.length,
+      content: nodes,
+      length: nodes?.length,
     };
 
     return section as Partial<ISection>;
@@ -80,7 +85,7 @@ export class SectionService {
     if (response[1]) {
       console.log('NODES:', node);
       throw new InternalServerErrorException(
-        'FUCK!',
+        'CRAP!',
         'multiple content nodes are possible.',
       );
     }
@@ -97,12 +102,6 @@ export class SectionService {
     const rawText = this.joinNodes(nodes);
 
     return this.parser.handleModifierSpacing(rawText, modifier);
-
-    // TODO - IMPORANT!!!
-    // return {
-    //   text,
-    //   metadata: this.handleMetadata(node),
-    // };
   }
 
   private joinNodes(nodes: Array<string>) {
@@ -117,5 +116,68 @@ export class SectionService {
       node.text = node.text.replace(/\s\s+/g, ' ').trim(); // remove additional spaces
       return node;
     });
+  }
+
+  private squashNodes(nodes: Array<IContent>) {
+    const newNodes = [];
+    const mergeableNodes = [];
+
+    for (let i = 0; i < nodes.length - 1; i++) {
+      const node = nodes[i];
+
+      if (this.isMergeable(node)) mergeableNodes.push(node);
+      else {
+        const mergedNodes = this.handleMergeableNodes(mergeableNodes);
+        if (mergedNodes) newNodes.push(mergedNodes);
+        mergeableNodes.length = 0; // resets mergeable nodes
+        newNodes.push(node);
+      }
+    }
+
+    return newNodes;
+  }
+
+  private handleMergeableNodes(nodes: Array<IContent>) {
+    if (nodes.length === 0) return null;
+    if (nodes.length === 1) return nodes[0];
+    if (nodes.length > 1) return this.mergeNodes(nodes);
+  }
+
+  private isMergeable(node: IContent) {
+    if (node.text.length < 35) {
+      // Text Cases
+      if (node.text.startsWith('•')) return true;
+      if (node.text.startsWith('⁃')) return true;
+      if (node.text.startsWith('·')) return true;
+
+      if (node.text.endsWith(',')) return true;
+      if (node.text.endsWith(':')) return true;
+      if (node.text.endsWith('?')) return false;
+      if (node.text.endsWith(';')) return false;
+
+      if (this.parser.isTextHeader(node)) return false;
+      if (this.parser.isTextBlock(node)) return true;
+
+      // Default Case
+      if (!node.text.endsWith('.')) return true;
+    } else return false;
+  }
+
+  private mergeNodes(nodes: Array<IContent>): Partial<IContent> {
+    let text = nodes[0].text;
+    const content_type = nodes[0].content_type;
+    const metadata: any = nodes[0].metadata;
+
+    for (let i = 1; i < nodes.length; i++) {
+      text = text.concat('\n', nodes[i].text);
+      metadata.content_types ||= [];
+      metadata.content_types.push(nodes[i].content_type);
+    }
+
+    return {
+      text,
+      content_type,
+      metadata,
+    };
   }
 }
