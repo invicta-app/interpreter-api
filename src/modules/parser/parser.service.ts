@@ -1,6 +1,7 @@
 import { Injectable, InternalServerErrorException } from '@nestjs/common';
 import {
   ContentMetadata,
+  IContent,
   NodeMetadata,
   TextModifier,
 } from '../../types/content.types';
@@ -47,5 +48,47 @@ export class ParserService {
 
   isStringArray(nodes: any) {
     return nodes.every((node) => typeof node === 'string');
+  }
+
+  isTextBlock(node: IContent): boolean {
+    const type = node.content_type;
+
+    if (type === 'p' || type === 'blockquote') {
+      return true;
+    } else return false;
+  }
+
+  isTextModifier(node: IContent): boolean {
+    const type = node.content_type;
+
+    if (
+      type === 'i' ||
+      type === 'q' ||
+      type === 'a' ||
+      type === 'strong' ||
+      type === 'span' ||
+      type === 'emphasize' ||
+      type === 'em' ||
+      type === 'br' ||
+      type === 'small'
+    ) {
+      return true;
+    } else return false;
+  }
+
+  isTextHeader(node: IContent): boolean {
+    const type = node.content_type;
+
+    if (
+      type === 'h1' ||
+      type === 'h2' ||
+      type === 'h3' ||
+      type === 'h4' ||
+      type === 'h5' ||
+      type === 'h6' ||
+      type === 'title'
+    ) {
+      return true;
+    } else return false;
   }
 }
