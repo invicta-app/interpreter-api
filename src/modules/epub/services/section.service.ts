@@ -48,7 +48,7 @@ export class SectionService {
 
     // Content Blocks
     if (node?.p) return this.handleContentBlock(node, 'p');
-    if (node?.title) return this.handleContentBlock(node, 'title');
+    if (node?.title) return;
     if (node?.blockquote) return this.handleContentBlock(node, 'blockquote');
     if (node?.h1) return this.handleContentBlock(node, 'h1');
     if (node?.h2) return this.handleContentBlock(node, 'h2');
@@ -114,6 +114,11 @@ export class SectionService {
     return nodes.map((node, index) => {
       node.sequence = index;
       node.text = node.text.replace(/\s\s+/g, ' ').trim(); // remove additional spaces
+
+      const contentTypes = node.metadata.content_types;
+      if (contentTypes?.length)
+        node.metadata.content_types = this.getDistinct(contentTypes);
+
       return node;
     });
   }
@@ -144,12 +149,12 @@ export class SectionService {
   }
 
   private isMergeable(node: IContent) {
-    if (node.text.length < 35) {
+    if (node.text.length < 100) {
       // Text Cases
       if (node.text.startsWith('•')) return true;
       if (node.text.startsWith('⁃')) return true;
       if (node.text.startsWith('·')) return true;
-
+      if (node.text.match(/^\d/)) return true; // start with number
       if (node.text.endsWith(',')) return true;
       if (node.text.endsWith(':')) return true;
       if (node.text.endsWith('?')) return false;
@@ -179,5 +184,9 @@ export class SectionService {
       content_type,
       metadata,
     };
+  }
+
+  private getDistinct(arr: Array<any>) {
+    return arr.filter((v, i, a) => a.indexOf(v) === i);
   }
 }
