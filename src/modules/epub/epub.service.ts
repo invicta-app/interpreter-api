@@ -80,10 +80,14 @@ export class EpubService {
     const fileAsString = fileBuffer.toString();
     const tocXml = await processXml(fileAsString, { preserveOrder: true });
 
-    if (type === 'section')
-      return this.tocSectionService.processTocFile(tocXml);
-    // if (type === 'ncx')
-    //   return this.tocNcxService.processTocNcx(tocXml);
+    let toc = [];
+    if (type === 'section') toc = this.tocSectionService.processTocFile(tocXml);
+    // if (type === 'ncx') toc = this.tocNcxService.processTocNcx(tocXml);
+
+    const entries = Object.keys(await epub.entries());
+    toc = this.updateTocEntries(toc, entries);
+
+    return toc;
   }
 
   formatEntries(entries: any) {
@@ -144,8 +148,17 @@ export class EpubService {
       return { href: href_path, type: item.type };
     }
 
-    // TODO - read epub entry data and sync
-
     return item;
+  }
+
+  private updateTocEntries(
+    toc: TableOfContents,
+    entries: Array<string>,
+  ): TableOfContents {
+    for (let i = 0; i < toc.length; i++) {
+      toc[i].href = entries.find((e) => e.endsWith(toc[i].href));
+    }
+
+    return toc;
   }
 }
