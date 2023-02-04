@@ -41,7 +41,7 @@ export class TocSectionService {
     if (node?.p) return this.handleSegmentBlock(node, 'p');
     if (node?.a) return this.handleHrefNode(node);
 
-    if (node?.title) return this.handleSegmentBlock(node, 'title');
+    if (node?.title) return;
     if (node?.h1) return this.handleSegmentBlock(node, 'h1');
     if (node?.h2) return this.handleSegmentBlock(node, 'h2');
     if (node?.h3) return this.handleSegmentBlock(node, 'h3');
@@ -99,7 +99,10 @@ export class TocSectionService {
   }
 
   private cleanSegments(nodes: Array<any>): any {
-    return nodes.filter((n) => n?.title || n?.href);
+    nodes = nodes.filter((n) => n?.title || n?.href);
+    nodes = nodes.filter((n) => !n.title.toLowerCase().startsWith('cover'));
+
+    return nodes;
   }
 
   private formatSegments(nodes: Array<any>): any {

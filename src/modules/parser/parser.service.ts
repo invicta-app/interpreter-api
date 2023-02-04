@@ -15,6 +15,7 @@ export class ParserService {
 
     processedText = processedText.replace('&nbsp;', ' ');
     processedText = processedText.replace('&#160;', ' ');
+    processedText = processedText.replace('NBSP', ' ');
 
     return processedText;
   }
@@ -22,9 +23,11 @@ export class ParserService {
   handleModifierSpacing(text: string, modifier: TextModifier): string {
     const [before, after] = ['', ''];
 
+    // TODO - zero functionality at the moment
     if (modifier === 'span') return `${before}${text}${after}`;
     if (modifier === 'i') return `${before}*${text}*${after}`;
     if (modifier === 'emphasize') return `${before}**${text}**${after}`;
+    if (modifier === 'em') return `${before}**${text}**${after}`;
     if (modifier === 'strong') return `${before}**${text}**${after}`;
     if (modifier === 'q') return `${before}**${text}**${after}`;
     if (modifier === 'a') return `${before}${text}${after}`; // TODO

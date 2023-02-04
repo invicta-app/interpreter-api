@@ -30,10 +30,12 @@ export class StreamService {
     for await (const item of orderedManifest) {
       item.href = entries.find((entry) => entry.endsWith(item.href)); // TODO - necessary?
       const section = await this.epub.createSection(epub, item);
-      partialSections.push(section);
+      if (section) partialSections.push(section);
     }
 
     metadata.content_count = this.getContentCount(partialSections);
+    metadata.section_count = partialSections.length;
+
     const sections = this.epub.appendTitleToSections(
       partialSections,
       tableOfContents,

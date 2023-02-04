@@ -35,6 +35,8 @@ export class UploadService {
     // Misc Post-Processing
     if (opts.revise_title) metadata.title = opts.revise_title;
     metadata.content_count = this.getContentCount(partialSections);
+    metadata.section_count = partialSections.length;
+
     const sections = this.epub.appendTitleToSections(
       partialSections,
       tableOfContents,

@@ -11,6 +11,7 @@ export type Metadata = {
   identifiers: Array<{ id: string; type: string }>;
   contributors: Array<{ contributor: string; type: string }>;
   content_count: number;
+  section_count: number;
 };
 
 export type MetadataIdentifiers = {

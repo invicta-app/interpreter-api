@@ -67,6 +67,7 @@ export class EpubService {
     const xml = await processXml(fileAsString, { preserveOrder: true });
 
     const section = this.sectionService.processSectionFile(xml);
+
     section.ref_id = item.id;
     section.section = item.order;
     section.href = item.href;

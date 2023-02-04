@@ -65,6 +65,7 @@ export class SectionService {
     if (node?.strong) return this.handleTextModifier(node, 'strong');
     if (node?.br) return this.handleTextModifier(node, 'br');
     if (node?.small) return this.handleTextModifier(node, 'small');
+    if (node?.em) return this.handleTextModifier(node, 'em');
   }
 
   private handleContentBlock(node, contentType: ContentBlock) {
@@ -127,7 +128,7 @@ export class SectionService {
     const newNodes = [];
     const mergeableNodes = [];
 
-    for (let i = 0; i < nodes.length - 1; i++) {
+    for (let i = 0; i < nodes.length; i++) {
       const node = nodes[i];
 
       if (this.isMergeable(node)) mergeableNodes.push(node);
@@ -137,6 +138,10 @@ export class SectionService {
         mergeableNodes.length = 0; // resets mergeable nodes
         newNodes.push(node);
       }
+
+      if (i === nodes.length - 1 && mergeableNodes.length)
+        // if last iteration
+        newNodes.push(this.handleMergeableNodes(mergeableNodes));
     }
 
     return newNodes;
