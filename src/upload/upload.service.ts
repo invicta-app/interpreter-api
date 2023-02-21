@@ -3,7 +3,6 @@ import { ISection } from '../types/section.interface';
 import { EpubService } from '../modules/epub/epub.service';
 import axios from 'axios';
 import { Metadata } from '../types/metadata.types';
-import { TableOfContents } from '../types/tableOfContents.types';
 
 @Injectable()
 export class UploadService {
@@ -14,19 +13,16 @@ export class UploadService {
 
     // Create Epub Data
     const entries = this.epub.formatEntries(await epub.entries());
-    const { metadata, manifest, spine, tocHrefs } = await this.epub.process(
-      epub,
-    );
+    const { metadata, manifest, tocHrefs } = await this.epub.process(epub);
     const tableOfContents = await this.epub.createTableOfContents(
       epub,
       tocHrefs,
     );
 
     // Further Post-Processing
-    const orderedManifest = this.epub.orderManifestItems(manifest.text, spine);
     const partialSections: Array<Partial<ISection>> = [];
 
-    for await (const item of orderedManifest) {
+    for await (const item of manifest) {
       item.href = entries.find((entry) => entry.endsWith(item.href)); // TODO - necessary?
       const section = await this.epub.createSection(epub, item);
       partialSections.push(section);

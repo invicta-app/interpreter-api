@@ -15,19 +15,16 @@ export class StreamService {
   async streamVolume(volume_id: string) {
     const epub = await this.epub.stream(volume_id);
     const entries = this.epub.formatEntries(await epub.entries());
-
-    const { metadata, manifest, spine, tocHrefs } = await this.epub.process(
-      epub,
-    );
-
+    const { metadata, manifest, tocHrefs } = await this.epub.process(epub);
     const tableOfContents = await this.epub.createTableOfContents(
       epub,
       tocHrefs,
     );
-    const orderedManifest = this.epub.orderManifestItems(manifest.text, spine);
+
+    // Post Processing
     const partialSections: Array<Partial<ISection>> = [];
 
-    for await (const item of orderedManifest) {
+    for await (const item of manifest) {
       item.href = entries.find((entry) => entry.endsWith(item.href)); // TODO - necessary?
       const section = await this.epub.createSection(epub, item);
       if (section) partialSections.push(section);
@@ -52,14 +49,9 @@ export class StreamService {
     const { volume_id, section_number } = sectionDto;
     const epub = await this.epub.stream(volume_id);
     const entries = this.epub.formatEntries(await epub.entries());
+    const { manifest } = await this.epub.process(epub);
 
-    const { manifest, spine } = await this.epub.process(epub);
-
-    const orderedManifest = this.epub.orderManifestItems(manifest.text, spine);
-
-    const section = orderedManifest.find(
-      (item) => item.order == section_number,
-    );
+    const section = manifest.find((item) => item.order == section_number);
 
     if (!section)
       throw new BadRequestException(

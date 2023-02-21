@@ -58,7 +58,12 @@ export class EpubService {
     );
     const tocHrefs: Array<TocHref> = this.opf.tocService.getTocHrefs(opfObject);
 
-    return { metadata, manifest, spine, tocHrefs };
+    const orderedManifest = this.orderManifestItems(manifest.text, spine);
+
+    console.log('hrefs:', tocHrefs);
+    console.log('ordered manifest:', orderedManifest);
+
+    return { metadata, manifest: orderedManifest, tocHrefs };
   }
 
   async createSection(epub: any, item: ManifestItem) {
@@ -97,19 +102,6 @@ export class EpubService {
     return entriesArr;
   }
 
-  orderManifestItems(
-    manifestItems: Array<ManifestItem>,
-    spine: Array<{ idref: string }>,
-  ) {
-    const orderedText = [];
-    for (const [index, itemref] of spine.entries()) {
-      const next = manifestItems.find((item) => item.id === itemref.idref);
-      next.order = index;
-      if (!!next) orderedText.push(next);
-    }
-    return orderedText as Array<ManifestItem>;
-  }
-
   appendTitleToSections(
     partialSections: Array<Partial<ISection>>,
     toc: TableOfContents,
@@ -133,6 +125,19 @@ export class EpubService {
   }
 
   // PRIVATE INTERFACE
+
+  private orderManifestItems(
+    manifestItems: Array<ManifestItem>,
+    spine: Array<{ idref: string }>,
+  ) {
+    const orderedText = [];
+    for (const [index, itemref] of spine.entries()) {
+      const next = manifestItems.find((item) => item.id === itemref.idref);
+      next.order = index;
+      if (!!next) orderedText.push(next);
+    }
+    return orderedText as Array<ManifestItem>;
+  }
 
   private handleHref(tocHrefs: Array<TocHref>) {
     // TODO - TOC Decision Tree
