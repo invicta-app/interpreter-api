@@ -60,9 +60,6 @@ export class EpubService {
 
     const orderedManifest = this.orderManifestItems(manifest.text, spine);
 
-    console.log('hrefs:', tocHrefs);
-    console.log('ordered manifest:', orderedManifest);
-
     return { metadata, manifest: orderedManifest, tocHrefs };
   }
 
